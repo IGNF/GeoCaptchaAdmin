@@ -64,6 +64,20 @@
                     Gestion des clés d'accès
                   </router-link>
                 </li>
+
+                <li>
+                  <input
+                    :value="apiKey"
+                    @input="onInput"
+                    type="password"
+                    :disabled="apiKeyLocked"
+                    placeholder="clé d'API pour le dashboard"
+                    class="fr-input" 
+                  />
+                  <button @click="toggle" class="fr-btn" >
+                    {{ apiKeyLocked ? 'Modifier la clé' : 'Valider' }}
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -77,6 +91,24 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import logo from "@/assets/logo.png";
 import logoBis from "@/assets/logo_bis.png";
+
+const props = defineProps({
+  apiKey: String,
+  apiKeyLocked: Boolean,
+});
+
+const emit = defineEmits([
+  'update-api-key',
+  'toggle-api-key-lock'
+]);
+
+function onInput(event) {
+  emit('update-api-key', event.target.value);
+}
+
+function toggle() {
+  emit('toggle-api-key-lock');
+}
 
 const activeButton = ref('');
 const currentLogo = ref(logo);
@@ -110,6 +142,7 @@ onMounted(() => {
     observer.disconnect();
   });
 });
+
 </script>
 
 <style scoped>

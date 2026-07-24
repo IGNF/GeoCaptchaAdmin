@@ -49,10 +49,12 @@ export default {
       imageUrl: null, 
       validationMessage: null, 
       geoCaptchaLoaded: false, 
-      apiKey: import.meta.env.VITE_API_KEY, 
-      apiId: import.meta.env.VITE_API_ID, 
       apiBaseUrl: 'https://qlf-geocaptcha.ign.fr/api/v1' 
     };
+  },
+  props: {
+    apiKey: String,
+    appId: String,
   },
   methods: {
     // Charge dynamiquement le script GeoCaptcha
@@ -106,7 +108,7 @@ export default {
           method: 'GET',
           headers: {
             'x-api-key': this.apiKey,
-            'x-app-id': this.apiId,
+            'x-app-id': this.appId,
           },
         });
         return response.ok;
@@ -138,17 +140,31 @@ export default {
     async initCaptcha() {
       try {
         await this.loadGeoCaptchaScript();
-        this.challengeId = await this.getChallengeId();
-        if (this.challengeId) {
-          this.imageUrl = await this.getCaptchaImage(this.challengeId);
-        }
+        console.log("script loaded");
+        // this.challengeId = await this.getChallengeId();
+        // console.log("challenge:",this.challengeId);
+        // if (this.challengeId) {
+        //   this.imageUrl = await this.getCaptchaImage(this.challengeId);
+        // }
       } catch (error) {
         this.loadingError = `Erreur d'initialisation: ${error.message}`;
       }
+    },
+
+    toggleApiKeyLock() {
+
+      // Si aucune clé saisie => on ne verrouille pas
+      if (!this.apiKeyLocked && !this.apiKey.trim()) {
+        this.validationMessage = 'Veuillez saisir une API Key';
+        return;
+      }
+      this.apiKeyLocked = !this.apiKeyLocked;
     }
   },
 
   mounted() {
+    window.vm = this;
+    console.log("Mounted");
     window.scrollTo(0, 0);
     this.initCaptcha();
   }

@@ -46,6 +46,10 @@ export default {
       showLegend: true, // État pour la visibilité de la légende
     };
   },
+  props: {
+    apiKey: String,
+    appId: String,
+  },
   mounted() {
     this.fetchAllTileCoordinates();
   },
@@ -53,7 +57,7 @@ export default {
     async fetchAllTileCoordinates() {
       let allCoordinates = [];
       let firstObject = 1;
-      const nbObjects = 20;
+      const nbObjects = 100;
 
       try {
         while (true) {
@@ -62,8 +66,8 @@ export default {
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-              'x-api-key': import.meta.env.VITE_API_KEY,
-              'x-app-id': import.meta.env.VITE_API_ID,
+              "x-api-key": this.apiKey,
+              "x-app-id": this.appId
             },
           });
 
@@ -89,12 +93,14 @@ export default {
           });
 
           allCoordinates.push(...rawCoordinates);
-
-          if (data.kingpin.length < nbObjects) {
+          
+          if (data.kingpin.length >= data.nbTotalObjects) {
             break;
           }
 
           firstObject += nbObjects;
+          //TODO : debug break
+          break;
         }
 
         this.coordinates = this.removeDuplicateCoordinates(allCoordinates);

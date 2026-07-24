@@ -1,7 +1,13 @@
 <template>
   <div id="app">
-    <Header /> 
-    <router-view /> 
+    <Header
+    :api-key="apiKey"
+    :api-key-locked="apiKeyLocked"
+    @update-api-key="updateApiKey"
+    @toggle-api-key-lock="toggleApiKeyLock" /> 
+    <router-view 
+     :api-key="apiKey"
+     :app-id="appId" /> 
     <DarkMode />
     <Footer /> 
   </div>
@@ -13,10 +19,26 @@ import Footer from './components/Footer.vue';
 import DarkMode from './components/DarkMode.vue';
 
 export default {
+  data() {
+    return {
+      apiKey: null, 
+      apiKeyLocked: false,
+      appId: "dashboard", 
+    };
+  },
   components: {
     Header,
     Footer,
     DarkMode,
+  },
+  methods: {
+    updateApiKey(value) {
+      this.apiKey = value;
+    },
+
+    toggleApiKeyLock() {
+      this.apiKeyLocked = !this.apiKeyLocked;
+    }
   }
 }
 </script>

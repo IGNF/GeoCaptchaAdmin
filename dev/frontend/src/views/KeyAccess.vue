@@ -362,7 +362,7 @@
 
 <script>
 
-import { auditService } from '@/services/audit-service';
+//import { auditService } from '@/services/audit-service';
 
 export default {
 
@@ -382,8 +382,6 @@ data() {
     keyToDelete: null,
     showConfirmationModal: false,
     showMissingInfoModal: false,
-    apiKey: import.meta.env.VITE_API_KEY,
-    apiId: import.meta.env.VITE_API_ID,
     firstObject: 1,
     nbObjects: 20,
     currentPage: 1,
@@ -400,7 +398,10 @@ data() {
     },
   };
 },
-
+props: {
+  apiKey: String,
+  appId: String,
+},
 computed: {
   // Nouvelle propriété calculée pour déterminer si le formulaire est valide
   isFormValid() {
@@ -423,7 +424,7 @@ computed: {
       
       const appIdMatch = key.appId && key.appId.toLowerCase().includes(searchQueryLower);
       const emailMatch = key.email && key.email.toLowerCase().includes(searchQueryLower);
-      const refererMatch = key.referer && key.referer.toLowerCase().includes(searchQueryLower);
+      const refererMatch = key.referer[0] && key.referer[0].toLowerCase().includes(searchQueryLower);
 
       const matchesTag = this.selectedTag === "" || key.role === this.selectedTag;
 
@@ -443,7 +444,7 @@ computed: {
       
       const appIdMatch = key.appId && key.appId.toLowerCase().includes(searchQueryLower);
       const emailMatch = key.email && key.email.toLowerCase().includes(searchQueryLower);
-      const refererMatch = key.referer && key.referer.toLowerCase().includes(searchQueryLower);
+      const refererMatch = key.referer[0] && key.referer[0].toLowerCase().includes(searchQueryLower);
 
       const matchesTag = this.selectedTag === "" || key.role === this.selectedTag;
 
@@ -532,7 +533,7 @@ methods: {
   
     this.validateEmail();
     this.validateReferer();
-},
+  },
 
   closeEditModal() {
     this.showEditModal = false;
@@ -544,7 +545,7 @@ methods: {
       referer: "",
       role: ""
     };
-},
+  },
 
   async saveChanges() {
     this.email = this.editedUser.email;
@@ -565,7 +566,7 @@ methods: {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": this.apiKey,
-          "x-app-id": this.apiId
+          "x-app-id": this.appId
         },
       body: JSON.stringify({
         appId: this.editedUser.appId,
@@ -599,12 +600,12 @@ Votre service CaptchAdmin`);
 
     window.location.href = `mailto:${oldEmail},${this.editedUser.email}?subject=${subjectNew}&body=${bodyNew}`;
 
-    auditService.logUpdate('/key-access', `Modification du profil de l'utilisateur: ${this.editedUser.appId}`);
+   // auditService.logUpdate('/key-access', `Modification du profil de l'utilisateur: ${this.editedUser.appId}`);
     await this.fetchKeys();
     this.closeEditModal();
   } catch (error) {
     console.error("Erreur:", error);
-    auditService.logError('/key-access', `Échec lors de la modification du profil de l'utilisateur: ${this.editedUser.appId}`);
+    //auditService.logError('/key-access', `Échec lors de la modification du profil de l'utilisateur: ${this.editedUser.appId}`);
   }
 },
 
@@ -616,7 +617,7 @@ Votre service CaptchAdmin`);
         headers: {
           "Content-Type": "application/json",
           "x-api-key": this.apiKey,
-          "x-app-id": this.apiId
+          "x-app-id": this.appId
         },
         body: JSON.stringify({
           appId: this.keyName,
@@ -661,7 +662,7 @@ Votre service CaptchAdmin`);
 
       window.location.href = `mailto:${this.email}?subject=${subject}&body=${body}`;
 
-      auditService.logCreate('/key-access', `Création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
+     // auditService.logCreate('/key-access', `Création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
 
       await this.fetchKeys();
       
@@ -675,7 +676,7 @@ Votre service CaptchAdmin`);
     } catch (error) {
       console.error("Erreur lors de la génération de la clé", error);
       this.errorMessage = error.message || "Une erreur est survenue lors de la génération de la clé.";
-      auditService.logCreate('/key-access', `Échec lors de la création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
+     // auditService.logCreate('/key-access', `Échec lors de la création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
     }
   },
 
@@ -695,7 +696,7 @@ Votre service CaptchAdmin`);
                 headers: {
                 "Accept": "*/*",
                 "x-api-key": this.apiKey,
-                "x-app-id": this.apiId
+                "x-app-id": this.appId
               }});
 
       if (!response.ok) {
@@ -717,13 +718,13 @@ Votre service CaptchAdmin`);
         window.location.href = `mailto:${userEmail}?subject=${subject}&body=${body}`;
       }
 
-      auditService.logDelete('/key-access', `Suppression de la clé d'accès pour l'utilisateur: ${userName}`);
+     // auditService.logDelete('/key-access', `Suppression de la clé d'accès pour l'utilisateur: ${userName}`);
 
       await this.fetchKeys();
       this.closeModal();
     } catch (error) {
       console.error("Erreur:", error);
-      auditService.logError('/key-access', `Échec lors de la suppression de la clé d'accès pour l'utilisateur: ${this.keyToDelete}`);
+     // auditService.logError('/key-access', `Échec lors de la suppression de la clé d'accès pour l'utilisateur: ${this.keyToDelete}`);
     }
   },
 
@@ -748,7 +749,7 @@ Votre service CaptchAdmin`);
           headers: {
             "Accept": "application/json",
             "x-api-key": this.apiKey,
-            "x-app-id": this.apiId
+            "x-app-id": this.appId
           },
         }
       );
@@ -765,13 +766,13 @@ Votre service CaptchAdmin`);
   async fetchKeys() {
     try {
       const response = await fetch(
-        `https://qlf-geocaptcha.ign.fr/api/v1/admin/cuser?firstObject=1&nbObjects=20`,
+        `https://qlf-geocaptcha.ign.fr/api/v1/admin/cuser?firstObject=1&nbObjects=100`,
         {
           method: "GET",
           headers: {
             "Accept": "application/json",
             "x-api-key": this.apiKey,
-            "x-app-id": this.apiId
+            "x-app-id": this.appId
           },
         }
       );
@@ -781,7 +782,7 @@ Votre service CaptchAdmin`);
 
       // Si moins de 20 clés, pas besoin de chercher plus
       if (this.apiKeys.length === 20) {
-        await this.fetchMoreKeys();
+        //await this.fetchMoreKeys();
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des clés", error);

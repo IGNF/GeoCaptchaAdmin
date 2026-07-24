@@ -48,7 +48,10 @@
             <h1 class="fr-h1">Gestion de Géocaptcha</h1>
             <h6 class="fr-h6">Carte de chaleur affichant la localisation des GéoCaptchas créés :</h6>
             <!-- Composant Heatmap pour afficher les données -->
-            <Heatmap :geocaptchaData="kingpinStats" />
+            <Heatmap 
+            :geocaptchaData="kingpinStats"
+            :api-key="apiKey"
+            :app-id="appId"  />
 
             <!-- Barre de recherche et filtres -->
             <div class="select-group-metrics">
@@ -324,7 +327,7 @@
 <script>
 
 /*Service de logs*/
-import { auditService } from '@/services/audit-service';
+//import { auditService } from '@/services/audit-service';
 
 /*Composants visuels importés*/
 import GaugeChart from '../components/GaugeChart.vue';
@@ -356,7 +359,7 @@ export default {
       isConfirmationModalVisible: false,
       filterOption: 'id-asc',
       firstObject: 1,
-      nbObjects: 20,
+      nbObjects: 100,
 
       sessionData: [],
       kingpinStats: [],
@@ -369,7 +372,10 @@ export default {
 
     };
   },
-
+  props: {
+    apiKey: String,
+    appId: String,
+  },
   computed: {
 
     // Filtrer les logs en fonction des critères de filtrage et de pagination
@@ -484,13 +490,13 @@ export default {
     async loadData(firstSessionObject = 1) {
       try {
         const sessionResponse = await fetch(
-          `https://qlf-geocaptcha.ign.fr/api/v1/admin/session?firstObject=${firstSessionObject}&nbObjects=20`,
+          `https://qlf-geocaptcha.ign.fr/api/v1/admin/session?firstObject=${firstSessionObject}&nbObjects=100`,
           {
             method: 'GET',
             headers: {
               "Accept": "application/json",
-              "x-api-key": import.meta.env.VITE_API_KEY,
-              "x-app-id": import.meta.env.VITE_API_ID,
+              "x-api-key": this.apiKey,
+              "x-app-id": this.appId,
             },
           }
         );
@@ -506,11 +512,14 @@ export default {
 
         this.sessionData = [...this.sessionData, ...newSessions];
 
-        if (newSessions.length === 20) {
-          await this.loadData(firstSessionObject + 20);
-        } else {
-          this.analyzeData();
-        }
+        console.log(this.sessionData);
+
+        // if (newSessions.length === 20) {
+        //   //await this.loadData(firstSessionObject + 20);
+        // } else {
+          // }
+        this.analyzeData();
+
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
         this.errorMessage = `Erreur: ${error.message}`;
@@ -633,7 +642,7 @@ export default {
 
     // Charger les logs depuis le service d'audit
     loadLogs() {
-      this.logs = auditService.getLogs();
+      //this.logs = auditService.getLogs();
     },
 
     // Afficher le modal de confirmation de suppression des logs
@@ -643,7 +652,7 @@ export default {
 
     // Supprimer les logs
     deleteLogs() {
-      auditService.clearLogs();
+      //auditService.clearLogs();
       this.logs = [];
       this.showDeleteModal = false;
 
@@ -695,8 +704,8 @@ export default {
             method: 'DELETE',
             headers: {
               "Content-Type": "application/json",
-              "x-api-key": import.meta.env.VITE_API_KEY,
-              "x-app-id": import.meta.env.VITE_API_ID,
+              "x-api-key": this.apiKey,
+              "x-app-id": this.appId,
             },
           }
         );
@@ -720,9 +729,9 @@ export default {
           rawTimestamp: new Date()
         };
 
-        if (auditService && typeof auditService.addLog === 'function') {
-          auditService.addLog(auditEntry);
-        }
+        // if (auditService && typeof auditService.addLog === 'function') {
+        //   auditService.addLog(auditEntry);
+        // }
 
         this.closeModal();
         this.closeConfirmationModal();
@@ -737,9 +746,9 @@ export default {
           rawTimestamp: new Date()
         };
 
-        if (auditService && typeof auditService.addLog === 'function') {
-          auditService.addLog(auditEntry);
-        }
+        // if (auditService && typeof auditService.addLog === 'function') {
+        //   auditService.addLog(auditEntry);
+        // }
       }
     },
   },

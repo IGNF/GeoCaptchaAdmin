@@ -255,7 +255,7 @@ import {XYZ} from 'ol/source';
 import * as turf from "@turf/turf";
 
 /*Service de logs*/
-import { auditService } from '@/services/audit-service';
+//import { auditService } from '@/services/audit-service';
 
 export default {
   name: "OpenLayersMap",
@@ -302,7 +302,10 @@ export default {
       captcha: null,
     };
   },
-
+  props: {
+    apiKey: String,
+    appId: String,
+  },
   watch: {
     selectedShape() {
       this.updateInteraction();
@@ -497,8 +500,8 @@ export default {
             method: "GET",
             headers: {
               "Accept": "image/png",
-              "x-api-key": import.meta.env.VITE_API_KEY,
-              "x-app-id": import.meta.env.VITE_API_ID,
+              "x-api-key": this.apiKey,
+              "x-app-id": this.appId,
             }
           }
         );
@@ -719,8 +722,8 @@ export default {
           headers: {
             "Accept": "*/*",
             "content-type": "application/json",
-            "x-api-key": import.meta.env.VITE_API_KEY,
-            "x-app-id": import.meta.env.VITE_API_ID,
+              "x-api-key": this.apiKey,
+              "x-app-id": this.appId,
           },
           body: JSON.stringify(data),
         });
@@ -731,7 +734,7 @@ export default {
         }
 
         // Log de création d'un GéoCaptcha
-        auditService.logCreate('/geo-captcha', `Création d'un GéoCaptcha`);
+        //auditService.logCreate('/geo-captcha', `Création d'un GéoCaptcha`);
 
         const result = await response.json();
         console.log("Réponse de l'API :", result);
@@ -745,7 +748,7 @@ export default {
         }, 3000);
       } catch (error) {
         console.error("Erreur :", error);
-        auditService.logError('/geo-captcha', `Échec lors de la création d'un GéoCaptcha`);
+        //auditService.logError('/geo-captcha', `Échec lors de la création d'un GéoCaptcha`);
       }
     },
 
