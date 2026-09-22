@@ -3,7 +3,7 @@
   <div class="fr-container">
       <div class="fr-footer__body">
           <div class="fr-footer__brand fr-enlarge-link">
-              <a id="footer-brand-link-6954" title="Captchadmin Géo" href="/">
+              <a id="footer-brand-link-6954" title="Captchadmin Géo" href="/public">
                   <p class="fr-logo">
                       République<br>française
                   </p>
