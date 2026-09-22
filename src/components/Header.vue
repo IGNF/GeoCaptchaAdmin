@@ -89,8 +89,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import logo from "@/assets/logo.png";
-import logoBis from "@/assets/logo_bis.png";
+import logo from "../assets/logo.png";
+import logoBis from "../assets/logo_bis.png";
 
 const props = defineProps({
   apiKey: String,

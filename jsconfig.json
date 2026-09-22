@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": [
+    "node_modules", "dist", "test", "CreateGeoCaptcha2.vue",
+    "../../src/views/Test.vue"
+  ]
+}
