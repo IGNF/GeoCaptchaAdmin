@@ -21,9 +21,9 @@ import DarkMode from './components/DarkMode.vue';
 export default {
   data() {
     return {
-      apiKey: null, 
+      apiKey: sessionStorage.getItem('dashboardApiKey') || null,
       apiKeyLocked: false,
-      appId: "dashboard", 
+      appId: "admin",
     };
   },
   components: {
@@ -33,7 +33,17 @@ export default {
   },
   methods: {
     updateApiKey(value) {
+      console.log("App.vue received API key");
+      console.log("API key exists:", !!value);
+      console.log("API key length:", value?.length);
+
       this.apiKey = value;
+
+      if (value) {
+        sessionStorage.setItem("dashboardApiKey", value);
+      } else {
+        sessionStorage.removeItem("dashboardApiKey");
+      }
     },
 
     toggleApiKeyLock() {

@@ -561,7 +561,7 @@ methods: {
     try {
       const oldEmail = this.apiKeys.find(key => key.appId === this.editedUser.appId).email;
 
-      const response = await fetch(`https://qlf-geocaptcha.ign.fr/api/v1/admin/cuser`, {
+      const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/cuser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -612,7 +612,7 @@ Votre service CaptchAdmin`);
   // Méthode pour générer une nouvelle clé d'accès
   async generateApiKey() {
     try {
-      const response = await fetch("https://qlf-geocaptcha.ign.fr/api/v1/admin/cuser", {
+      const response = await fetch("http://127.0.0.1:3000/api/v1/admin/cuser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -691,7 +691,7 @@ Votre service CaptchAdmin`);
       const userEmail = userToDelete?.email;
       const userName = userToDelete?.appId;
       
-      const response = await fetch(`https://qlf-geocaptcha.ign.fr/api/v1/admin/cuser/${id}`,
+      const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/cuser/${id}`,
           { method: "DELETE",
                 headers: {
                 "Accept": "*/*",
@@ -743,7 +743,7 @@ Votre service CaptchAdmin`);
   async fetchMoreKeys() {
     try {
       const response = await fetch(
-        `https://qlf-geocaptcha.ign.fr/api/v1/admin/cuser?firstObject=21&nbObjects=20`,
+        `http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=21&nbObjects=20`,
         {
           method: "GET",
           headers: {
@@ -755,7 +755,7 @@ Votre service CaptchAdmin`);
       );
       const resultat = await response.json();
       const additionalKeys = JSON.parse(JSON.stringify(resultat.cusers)) || [];
-      
+
       this.apiKeys = [...this.apiKeys, ...additionalKeys];
       this.totalKeys = this.apiKeys.length;
     } catch (error) {
@@ -765,34 +765,74 @@ Votre service CaptchAdmin`);
 
   async fetchKeys() {
     try {
-      const response = await fetch(
-        `https://qlf-geocaptcha.ign.fr/api/v1/admin/cuser?firstObject=1&nbObjects=100`,
-        {
-          method: "GET",
-          headers: {
-            "Accept": "application/json",
-            "x-api-key": this.apiKey,
-            "x-app-id": this.appId
-          },
-        }
-      );
-      const resultat = await response.json();
-      this.apiKeys = JSON.parse(JSON.stringify(resultat.cusers)) || [];
+      console.log("=== fetchKeys DEBUG ===");
+      console.log("apiKey exists:", !!this.apiKey);
+      console.log("apiKey length:", this.apiKey?.length);
+      console.log("appId:", this.appId);
+
+      if (!this.apiKey) {
+        throw new Error("apiKey est undefined ou vide");
+      }
+
+      if (!this.appId) {
+        throw new Error("appId est undefined ou vide");
+      }
+
+      const url =
+          "http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=1&nbObjects=100";
+
+      console.log("GET URL:", url);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "x-api-key": this.apiKey,
+          "x-app-id": this.appId
+        },
+      });
+
+      console.log("HTTP status:", response.status);
+      console.log("HTTP statusText:", response.statusText);
+
+      const rawBody = await response.text();
+
+      console.log("Raw response body:", rawBody);
+
+      if (!response.ok) {
+        throw new Error(
+            `HTTP ${response.status} ${response.statusText} - ${rawBody}`
+        );
+      }
+
+      let resultat;
+
+      try {
+        resultat = JSON.parse(rawBody);
+      } catch (parseError) {
+        console.error("Réponse non JSON:", rawBody);
+        throw parseError;
+      }
+
+      console.log("Parsed response:", resultat);
+
+      this.apiKeys = resultat.cusers || [];
       this.totalKeys = this.apiKeys.length;
 
-      // Si moins de 20 clés, pas besoin de chercher plus
-      if (this.apiKeys.length === 20) {
-        //await this.fetchMoreKeys();
-      }
     } catch (error) {
-      console.error("Erreur lors de la récupération des clés", error);
+      console.error("Erreur lors de la récupération des clés:", error);
     }
   },
 },
 
 mounted() {
   window.scrollTo(0, 0);
-  this.fetchKeys();
+
+  if (this.apiKey) {
+    this.fetchKeys();
+  } else {
+    console.log("KeyAccess mounted: waiting for API key...");
+  }
 },
 
 watch: {
@@ -807,6 +847,15 @@ watch: {
   // Valider le referer à chaque changement
   referer() {
     this.validateReferer();
+  },
+
+  apiKey(newApiKey) {
+    if (newApiKey) {
+      console.log("API key received by KeyAccess");
+      console.log("API key length:", newApiKey.length);
+
+      this.fetchKeys();
+    }
   }
 }
 };

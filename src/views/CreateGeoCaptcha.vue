@@ -495,7 +495,7 @@ export default {
     async getCaptchaImageTuile(layer, tileMatrix, col, row) {
       // Récupération de l'image de la tuile à partir de l'API 
       try {
-        const response = await fetch(`https://qlf-geocaptcha.ign.fr/api/v1/admin/proxy/tile?layer=${layer}&tileMatrix=${tileMatrix}&col=${col}&row=${row}`,
+        const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/proxy/tile?layer=${layer}&tileMatrix=${tileMatrix}&col=${col}&row=${row}`,
           {
             method: "GET",
             headers: {
@@ -717,7 +717,7 @@ export default {
 
       try {
         // Envoie de la requête POST à l'API pour récupérer le kingpin
-        const response = await fetch("https://qlf-geocaptcha.ign.fr/api/v1/admin/kingpin", {
+        const response = await fetch("http://127.0.0.1:3000/api/v1/admin/kingpin", {
           method: "POST",
           headers: {
             "Accept": "*/*",

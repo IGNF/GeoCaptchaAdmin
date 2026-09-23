@@ -27,7 +27,7 @@
         </form>
         <!-- Lien vers plus d'informations -->
         <p class="link-text">
-          <a href="https://qlf-geocaptcha.ign.fr/api/v1/" target="_blank" rel="noopener noreferrer" class="fr-link">
+          <a href="http://127.0.0.1:3000/api/v1/" target="_blank" rel="noopener noreferrer" class="fr-link">
             En savoir plus sur GeoCaptcha
           </a>
         </p>
@@ -49,7 +49,7 @@ export default {
       imageUrl: null, 
       validationMessage: null, 
       geoCaptchaLoaded: false, 
-      apiBaseUrl: 'https://qlf-geocaptcha.ign.fr/api/v1' 
+      apiBaseUrl: 'http://127.0.0.1:3000/api/v1'
     };
   },
   props: {

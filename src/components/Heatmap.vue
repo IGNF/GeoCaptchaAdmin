@@ -61,7 +61,7 @@ export default {
 
       try {
         while (true) {
-          const response = await fetch(`https://qlf-geocaptcha.ign.fr/api/v1/admin/kingpin?firstObject=${firstObject}&nbObjects=${nbObjects}`, {
+          const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/kingpin?firstObject=${firstObject}&nbObjects=${nbObjects}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',

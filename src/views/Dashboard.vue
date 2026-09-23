@@ -490,7 +490,7 @@ export default {
     async loadData(firstSessionObject = 1) {
       try {
         const sessionResponse = await fetch(
-          `https://qlf-geocaptcha.ign.fr/api/v1/admin/session?firstObject=${firstSessionObject}&nbObjects=100`,
+          `http://127.0.0.1:3000/api/v1/admin/session?firstObject=${firstSessionObject}&nbObjects=100`,
           {
             method: 'GET',
             headers: {
@@ -699,7 +699,7 @@ export default {
     async rejectGeocaptcha() {
       try {
         const response = await fetch(
-          `https://qlf-geocaptcha.ign.fr/api/v1/admin/session/${this.selectedGeocaptcha.id}`,
+          `http://127.0.0.1:3000/api/v1/admin/session/${this.selectedGeocaptcha.id}`,
           {
             method: 'DELETE',
             headers: {
