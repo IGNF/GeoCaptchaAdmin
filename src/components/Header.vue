@@ -1,96 +1,35 @@
-<template>
-  <header role="banner" class="fr-header">
-    <!-- En-tête fixe avec logo, menu et liens de navigation vers les fonctionnalités-->
-    <div class="fr-header__body">
-      <div class="fr-container">
-        <div class="fr-header__body-row">
-          <div class="fr-header__brand fr-enlarge-link">
-            <div class="fr-header__brand-top">
-              <div class="fr-header__operator">
-                <!-- Logo avec attribut alt à renseigner -->
-                <img
-                  class="fr-responsive-img logo"
-                  style="max-width:5rem;"
-                  :src="currentLogo"
-                  alt="Logo de l'interface"
-                />
-              </div>
-            </div>
-            <div class="fr-header__service">
-              <!-- Lien vers la page d'accueil -->
-              <router-link
-                to="/"
-                class="fr-header__service-title"
-                :class="{ active: activeButton === '' }"
-                @click="setActiveButton('')"
-              >
-                CaptchAdmin
-                <span class="fr-badge fr-badge--sm fr-badge--green-emeraude">BETA</span>
-              </router-link>
-              <p class="fr-header__service-tagline">Interface Administrateur du GéoCaptcha</p>
-            </div>
-          </div>
-          <div class="fr-header__tools">
-            <div class="fr-header__tools-links">
-              <!-- Liste des liens de navigation -->
-              <ul class="fr-btns-group">
-                <li>
-                  <router-link
-                    to="/geo-captcha"
-                    class="fr-btn fr-icon-earth-fill fr-btn"
-                    :class="{ active: activeButton === 'geo-captcha' }"
-                    @click="setActiveButton('geo-captcha')"
-                  >
-                    Générer un GeoCaptcha
-                  </router-link>
-                </li>
-                <li>
-                  <router-link
-                    to="/dashboard"
-                    class="fr-btn fr-icon-dashboard-3-line fr-btn"
-                    :class="{ active: activeButton === 'dashboard' }"
-                    @click="setActiveButton('dashboard')"
-                  >
-                    Tableau de Bord
-                  </router-link>
-                </li>
-                <li>
-                  <router-link
-                    to="/key-access"
-                    class="fr-btn fr-icon-user-setting-fill"
-                    :class="{ active: activeButton === 'key-access' }"
-                    @click="setActiveButton('key-access')"
-                  >
-                    Gestion des clés d'accès
-                  </router-link>
-                </li>
-
-                <li>
-                  <input
-                    :value="apiKey"
-                    @input="onInput"
-                    type="password"
-                    :disabled="apiKeyLocked"
-                    placeholder="clé d'API pour le dashboard"
-                    class="fr-input" 
-                  />
-                  <button @click="toggle" class="fr-btn" >
-                    {{ apiKeyLocked ? 'Modifier la clé' : 'Valider' }}
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-</template>
-
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import {
+  DsfrHeader,
+  DsfrInput,
+} from "@gouvminint/vue-dsfr";
 import logo from "../assets/logo.png";
 import logoBis from "../assets/logo_bis.png";
+
+const showSearch = true;
+const logoText = ['Institut national de', 'l\'information', 'géographique et', 'forestière'];
+const serviceTitle = 'GeoCaptchaAdmin';
+const serviceDescription = 'Interface Administrateur de GeoCaptcha';
+const homeTo = '/';
+const quickLinks = [
+  {
+    label: 'Générer un GéoCaptcha',
+    to: '/geo-captcha',
+    icon: 'fr-icon-earth-fill',
+  },
+  {
+    label: 'Tableau de bord',
+    to: '/dashboard',
+    icon: 'fr-icon-dashboard-3-line',
+  },
+  {
+    label: 'Gestion des clés d\'accès',
+    to: 'key-access',
+    icon: 'fr-icon-admin-line',
+  }
+];
+const showBeta = true;
 
 const props = defineProps({
   apiKey: String,
@@ -142,8 +81,113 @@ onMounted(() => {
     observer.disconnect();
   });
 });
-
 </script>
+
+<template>
+  <header role="banner" class="fr-header">
+    <!-- En-tête fixe avec logo, menu et liens de navigation vers les fonctionnalités-->
+    <div class="fr-header__body">
+      <div class="fr-container">
+        <div class="fr-header__body-row">
+          <div class="fr-header__brand fr-enlarge-link">
+            <div class="fr-header__brand-top">
+              <div class="fr-header__operator">
+                <!-- Logo avec attribut alt à renseigner -->
+                <img
+                    class="fr-responsive-img logo"
+                    style="max-width:5rem;"
+                    :src="currentLogo"
+                    alt="Logo de l'interface"
+                />
+              </div>
+            </div>
+            <div class="fr-header__service">
+              <!-- Lien vers la page d'accueil -->
+              <router-link
+                  to="/"
+                  class="fr-header__service-title"
+                  :class="{ active: activeButton === '' }"
+                  @click="setActiveButton('')"
+              >
+                CaptchAdmin
+                <span class="fr-badge fr-badge--sm fr-badge--green-emeraude">BETA</span>
+              </router-link>
+              <p class="fr-header__service-tagline">Interface Administrateur du GéoCaptcha</p>
+            </div>
+          </div>
+          <div class="fr-header__tools">
+            <div class="fr-header__tools-links">
+              <!-- Liste des liens de navigation -->
+              <ul class="fr-btns-group">
+                <li>
+                  <router-link
+                      to="/geo-captcha"
+                      class="fr-btn fr-icon-earth-fill fr-btn"
+                      :class="{ active: activeButton === 'geo-captcha' }"
+                      @click="setActiveButton('geo-captcha')"
+                  >
+                    Générer un GeoCaptcha
+                  </router-link>
+                </li>
+                <li>
+                  <router-link
+                      to="/dashboard"
+                      class="fr-btn fr-icon-dashboard-3-line fr-btn"
+                      :class="{ active: activeButton === 'dashboard' }"
+                      @click="setActiveButton('dashboard')"
+                  >
+                    Tableau de Bord
+                  </router-link>
+                </li>
+                <li>
+                  <router-link
+                      to="/key-access"
+                      class="fr-btn fr-icon-user-setting-fill"
+                      :class="{ active: activeButton === 'key-access' }"
+                      @click="setActiveButton('key-access')"
+                  >
+                    Gestion des clés d'accès
+                  </router-link>
+                </li>
+
+                <li>
+                  <input
+                      :value="apiKey"
+                      @input="onInput"
+                      type="password"
+                      :disabled="apiKeyLocked"
+                      placeholder="clé d'API pour le dashboard"
+                      class="fr-input"
+                  />
+                  <button @click="toggle" class="fr-btn" >
+                    {{ apiKeyLocked ? 'Modifier la clé' : 'Valider' }}
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+<!--  <DsfrHeader-->
+<!--    :showSearch-->
+<!--    :logo-text-->
+<!--    :service-title-->
+<!--    :serviceDescription-->
+<!--    :homeTo-->
+<!--    :quickLinks-->
+<!--    :showBeta-->
+<!--  >-->
+<!--    <template #after-quick-links>-->
+<!--      <div class="api-key-controls">-->
+<!--        <DsfrInput-->
+
+<!--        />-->
+<!--      </div>-->
+<!--    </template>-->
+<!--  </DsfrHeader>-->
+</template>
 
 <style scoped>
 @import "@gouvfr/dsfr/dist/dsfr.min.css";
