@@ -20,6 +20,7 @@ export type CustomHeaderProps = {
     showField?: boolean
     /** Label accessible from the modal opening button on mobile */
     showFieldLabel?: string
+    fieldIcon?: string
     showBeta?: boolean
     menuLabel?: string
     menuModalLabel?: string
