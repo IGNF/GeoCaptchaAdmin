@@ -262,7 +262,6 @@ export default {
             "x-app-id": this.appId
           },
           body: JSON.stringify({
-            appId: updatedUser.appId,
             email: updatedUser.email,
             referer: updatedUser.referer,
             role: updatedUser.role
@@ -305,6 +304,11 @@ Votre service CaptchAdmin`);
     // Méthode pour générer une nouvelle clé d'accès
     async generateApiKey() {
       try {
+        const referers = this.referer
+          .split(',')
+          .map(referer => referer.trim())
+          .filter(Boolean);
+
         const response = await fetch("http://127.0.0.1:3000/api/v1/admin/cuser", {
           method: "POST",
           headers: {
@@ -315,7 +319,7 @@ Votre service CaptchAdmin`);
           body: JSON.stringify({
             appId: this.keyName,
             email: this.email,
-            referer: this.referer,
+            referer: referers,
             role: this.role
           })
         });
