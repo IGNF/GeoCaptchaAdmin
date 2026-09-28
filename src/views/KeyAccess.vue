@@ -14,6 +14,7 @@ import {
   DsfrModal,
   DsfrInput,
   DsfrInputGroup,
+  DsfrSelect,
 } from "@gouvminint/vue-dsfr";
 
 export default {
@@ -32,6 +33,7 @@ export default {
     DsfrModal,
     DsfrInput,
     DsfrInputGroup,
+    DsfrSelect,
   },
 
   data() {
@@ -733,29 +735,18 @@ Votre service CaptchAdmin`);
               "
             />
 
-            <div class="fr-select-group">
-              <label class="fr-label" for="edit-select">
-                Rôle :
-              </label>
-
-              <select
-                  id="edit-select"
-                  name="edit-select"
-                  v-model="editedUser.role"
-                  class="fr-select"
-                  required
-              >
-                <option value="" disabled hidden>
-                  Choisissez un rôle
-                </option>
-                <option value="admin">
-                  Admin
-                </option>
-                <option value="private">
-                  Private
-                </option>
-              </select>
-            </div>
+            <DsfrSelect
+              v-model="editedUser.role"
+              select-id="edit-select"
+              name="edit-select"
+              label="Rôle :"
+              :options="[
+                  { value: 'admin', text: 'Admin' },
+                  { value: 'private', text: 'Private' },
+              ]"
+              default-unselected-text="Choissez un rôle"
+              required
+            />
           </form>
 
           <template #footer>
@@ -781,33 +772,34 @@ Votre service CaptchAdmin`);
 
 
         <!-- Modal de confirmation de suppression -->
-        <div v-if="showModal" class="modal-overlay">
-          <div class="fr-container fr-container--fluid fr-container-md">
-            <div class="fr-grid-row fr-grid-row--center">
-              <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
-                <div class="fr-modal__body">
-                  <div class="fr-modal__header">
-                    <button @click="closeModal" class="fr-btn--close fr-btn" id="close">Fermer</button>
-                  </div>
+        <DsfrModal
+          title="Confirmation de suppression"
+          :opened="showModal"
+          size="md"
+          icon="ri-warning-line"
+          @close="closeModal"
+        >
+          <p>Êtes vous sûr de vouloir supprimer cette clé ?</p>
 
-                  <div class="fr-modal__content">
-                    <h2 class="fr-modal__title">
-                      <span class="fr-icon-warning-line fr-icon--lg" aria-hidden="true"></span>
-                      Confirmation de suppression
-                    </h2>
-                    <p>Êtes-vous sûr de vouloir supprimer cette clé ?</p>
-                  </div>
+          <template #footer>
+            <DsfrButtonGroup
+              align="right"
+              inline-layout-when="large"
+              reverse
+            >
+              <DsfrButton
+                label="Supprimer"
+                @click="deleteKey"
+              />
 
-                  <div class="fr-modal__footer fr-btns-group--right fr-btns-group--inline-lg fr-btns-group--icon-left">
-                    <button @click="deleteKey" class="fr-btn fr-btn--reject">Oui, supprimer</button>
-                    <button @click="closeModal" class="fr-btn fr-btn--cancel" id="cancel">Annuler</button>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+              <DsfrButton
+                label="Annuler"
+                secondary
+                @click="closeModal"
+              />
+            </DsfrButtonGroup>
+          </template>
+        </DsfrModal>
       </DsfrTabContent>
 
       <!-- Onglet Générer une clé d'accès -->
@@ -821,92 +813,105 @@ Votre service CaptchAdmin`);
             <h1 class="fr-h1">Générer une clé d'accès</h1>
             <form @submit.prevent="openConfirmationModal">
 
-              <div class="fr-input-group">
-                <label class="fr-label" for="key-name">Nom :</label>
-                <input
-                    type="text"
-                    id="key-name"
-                    v-model="keyName"
-                    class="fr-input"
-                    placeholder="Nom associé à la clé d'accès (minimum 5 caractères)"
-                    minlength="5"
-                    required
-                    @input="validateKeyName"
-                />
-                <span v-if="keyName && !isValidKeyname" class="fr-error">Le nom doit comprendre au minimum 5 caractères, sans espace, et sans symboles autre que "-" et "_".</span>
-              </div>
+              <DsfrInputGroup
+                v-model="keyName"
+                label="Nom :"
+                placeholder="Nom associé à la clé d'accès (minimum 5 caratères)"
+                hint="Minimum 5 caractères, sans espace et sans symboles autres que « - » et « _ »."
+                minlength="5"
+                required
+                type="text"
+                :error-message="
+                  keyName && !isValidKeyname
+                    ? 'Le nom doit comprendre au minimum 5 caractères, sans espace, et sans symboles autre que « - » et « _ ».'
+                    : undefined
+                "
+                @input="validateKeyName"
+              />
+
+              <DsfrInputGroup
+                v-model="email"
+                input-group-id="email"
+                label="Adresse mail associée :"
+                placeholder="exemple@xyz.fr"
+                required
+                type="email"
+                :error-message="
+                  email && !isValidEmail
+                    ? 'L’adresse email doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme exemple@xyz.fr'
+                    : undefined
+                "
+              />
+
+              <DsfrInputGroup
+                v-model="referer"
+                input-group-id="key-referer"
+                label="Referer :"
+                placeholder="Exemple : http(s)://application-client1.fr, http(s)://application-client2.fr"
+                required
+                type="text"
+                :error-message="
+                  referer && !isValidReferer
+                    ? 'L’URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme http(s)://application-client1.fr'
+                    : undefined
+                "
+                @input="validateReferer"
+              />
 
 
-              <div class="fr-input-group">
-                <label class="fr-label" for="email">Adresse mail associée :</label>
-                <input type="email" id="email" v-model="email" class="fr-input" placeholder="exemple@xyz.fr" required/>
-                <span v-if="email && !isValidEmail" class="fr-error">L'adresse email doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme exemple@xyz.fr</span>
-              </div>
+              <DsfrSelect
+                  v-model="role"
+                  select-id="select"
+                  label="Rôle :"
+                  name="select"
+                  :options="[
+                    { value: 'admin', text: 'Admin' },
+                    { value: 'private', text: 'Private' },
+                ]"
+                  default-unselected-text="Choisissez un rôle"
+                  required
+              />
 
-              <div class="fr-input-group">
-                <label class="fr-label" for="key-referer">Referer :</label>
-                <input
-                    type="text"
-                    id="key-referer"
-                    v-model="referer"
-                    class="fr-input"
-                    placeholder="Exemple : http(s)://application-client1.fr"
-                    @input="validateReferer"
-                    required
-                />
-                <span v-if="referer && !isValidReferer" class="fr-error">L'URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme http(s)://application-client1.fr</span>
-              </div>
-
-
-              <div class="fr-select-group">
-                <label class="fr-label" for="select">Rôle :</label>
-                <select id="select" name="select" v-model="role" class="fr-select" required>
-                  <option value="" disabled selected hidden>Choisissez un rôle</option>
-                  <option value='admin'>Admin</option>
-                  <option value='private'>Private</option>
-                </select>
-              </div>
-
-              <button
-                  type="submit"
-                  class="fr-btn fr-btn--primary cle-generer"
-                  :disabled="!isFormValid"
-                  :class="{ 'fr-btn--disabled': !isFormValid }"
-              >
-                Générer la clé
-              </button>
+              <DsfrButton
+                label="Générer la clé"
+                type="submit"
+                :disabled="!isFormValid"
+              />
             </form>
           </div>
 
           <!-- Modal de confirmation de génération -->
-          <div v-if="showConfirmationModal" class="modal-overlay">
-            <div class="fr-container fr-container--fluid fr-container-md">
-              <div class="fr-grid-row fr-grid-row--center">
-                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
-                  <div class="fr-modal__body">
-                    <div class="fr-modal__header">
-                      <button @click="generateApiKey" aria-controls="modal-6053" title="Fermer" type="button" id="button-6054" class="fr-btn--close fr-btn">Fermer</button>
-                    </div>
+          <DsfrModal
+            title="Confirmation de génération"
+            :opened="showConfirmationModal"
+            size="md"
+            icon="ri-warning-line"
+            @close="showConfirmationModal = false"
+          >
+            <p>
+              Êtes-vous sûr de vouloir générer cette clé d'accès ?
+              Un mail contenant la nouvelle clé sera envoyé à l'adresse renseignée.
+            </p>
 
-                    <div class="fr-modal__content">
-                      <h1 id="modal-6053-title" class="fr-modal__title">
-                        <span class="fr-icon-check-line fr-icon--lg" aria-hidden="true"></span>
-                        Clé Générée
-                      </h1>
-                      <p>La clé a été générée avec succès. Un mail sera envoyé à l'adresse renseignée dans les plus brefs délais.</p>
-                    </div>
+            <template #footer>
+              <DsfrButtonGroup
+                align="right"
+                inline-layout-when="large"
+                reverse
+              >
+                <DsfrButton
+                    label="Valider"
+                    @click="generateApiKey"
+                />
 
-                    <div class="fr-modal__footer">
-                      <div class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg fr-btns-group--icon-left">
-                        <button @click="generateApiKey" type="button" id="button-6047" class="validate-btn fr-btn fr-icon-checkbox-circle-line fr-btn--icon-left">Valider</button>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                <DsfrButton
+                  label="Annuler"
+                  secondary
+                  @click="showConfirmationModal = false"
+                />
+              </DsfrButtonGroup>
+            </template>
+          </DsfrModal>
         </div>
       </DsfrTabContent>
     </DsfrTabs>
@@ -927,83 +932,8 @@ Votre service CaptchAdmin`);
 margin: 1em;
 }
 
-.barre h1 {
-margin: 0;
-}
-
-/* Styles des boutons */
-
-#close{
-background: none;
-border: none;
-cursor: pointer;
-}
-
-.fr-btn--reject {
-      background-color: red; 
-      color: #fff; 
-}
-
-.fr-btn--reject:hover {
-      background-color: #c82333; 
-}
-
-#cancel{
-background-color: #ddd !important;
-color: #3a3a3a;
-}
-
-#cancel:hover {
-background-color: #c1c1c1 !important;
-color: #3a3a3a;
-}
-
 .key-generation {
 padding: 1em;
-}
-
-.fr-btn--disabled {
-opacity: 0.5;
-cursor: not-allowed;
-pointer-events: none;
-}
-
-/* Pour une meilleure indication visuelle */
-.cle-generer {
-transition: opacity 0.3s ease;
-}
-
-.fr-input-group {
-margin-bottom: 1em;
-}
-
-.fr-input-group .fr-label {
-margin-bottom: 0.5em;
-}
-
-.fr-input {
-width: 100%;
-padding: 0.8rem;
-}
-
-.cle-generer {
-display: block;
-margin-left: auto;
-}
-
-/* Modal */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
 }
 
 .search-container {
