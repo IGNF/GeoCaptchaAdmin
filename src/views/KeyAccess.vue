@@ -251,9 +251,9 @@ export default {
         const oldEmail = this.apiKeys.find(key => key.appId === updatedUser.appId).email;
 
         const response = await fetch(
-            `http://127.0.0.1:3000/api/v1/admin/cuser`,
-            {
-          method: "POST",
+            `http://127.0.0.1:3000/api/v1/admin/cuser/${encodeURIComponent(updatedUser.appId)}`,
+          {
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
             "x-api-key": this.apiKey,
