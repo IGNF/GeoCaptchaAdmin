@@ -1,595 +1,286 @@
-<template> 
-  <div class="fr-tabs">
-    <!-- Liste des onglets -->
-    <ul class="fr-tabs__list" role="tablist" aria-label="Navigation des onglets">
-      <li role="presentation">
-        <button
-          id="tabpanel-404"
-          class="fr-tabs__tab fr-icon-group-line fr-tabs__tab--icon-left"
-          :class="{ 'fr-tabs__tab--selected': activeTab === 'tabpanel-404' }"
-          role="tab"
-          :aria-selected="activeTab === 'tabpanel-404'"
-          aria-controls="tabpanel-404-panel"
-          @click="switchTab('tabpanel-404')"
-        >
-          Liste des utilisateurs
-        </button>
-      </li>
-      <li role="presentation">
-        <button
-          id="tabpanel-405"
-          class="fr-tabs__tab fr-icon-user-add-line fr-tabs__tab--icon-left"
-          :class="{ 'fr-tabs__tab--selected': activeTab === 'tabpanel-405' }"
-          role="tab"
-          :aria-selected="activeTab === 'tabpanel-405'"
-          aria-controls="tabpanel-405-panel"
-          @click="switchTab('tabpanel-405')"
-        >
-          Générer une clé d'accès
-        </button>
-      </li>
-    </ul>
-
-    <!-- Contenus des onglets -->
-
-    <!-- Onglet Liste des utilisateurs-->
-    <div
-      id="tabpanel-404-panel"
-      class="fr-tabs__panel"
-      :class="{ 'fr-tabs__panel--selected': activeTab === 'tabpanel-404' }"
-      role="tabpanel"
-      aria-labelledby="tabpanel-404"
-    >
-      <div class="key-list">
-        <div class="barre">
-          <h1>Liste des utilisateurs</h1>
-          <div class="search-container">
-
-            <div class="tag-container">
-              <ul class="fr-tags-group">
-                <li>
-                  <button class="fr-tag" :class="{ 'fr-tag--selected': selectedTag === 'admin' }" :aria-pressed="(selectedTag === 'admin').toString()" type="button" @click="toggleTag('admin')">
-                    Admin
-                  </button>
-                </li>
-                <li>
-                  <button class="fr-tag" :class="{ 'fr-tag--selected': selectedTag === 'private' }" :aria-pressed="(selectedTag === 'private').toString()" type="button" @click="toggleTag('private')">
-                    Private
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            <div class="tooltip-container">
-              <button @mouseover="showTooltip" @mouseleave="hideTooltip" class="fr-btn--tertiary-no-outline fr-icon-information-line"></button>
-              <span v-if="isTooltipVisible" class="custom-tooltip">
-                Vous pouvez rechercher via le nom, l'adresse mail ou le referer.
-              </span>
-            </div>
-
-            <div class="fr-search-bar">
-              <input
-                class="fr-input"
-                placeholder="Rechercher"
-                type="search"
-                v-model="searchQuery"
-              />
-              <button title="Rechercher" type="button" class="fr-btn"> Rechercher </button>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="fr-grid-row fr-grid-row--gutters">
-          <div
-            v-for="(key, index) in filteredKeys"
-            :key="index"
-            class="fr-col-12 fr-col-md-6 fr-col-lg-4"
-          >
-            <div class="fr-tile">
-              <div class="fr-tile__header">
-                <p><strong class="fr-tile__title">Nom : </strong>{{ key.appId }}</p>
-                <p><strong class="fr-tile__title">Adresse mail : </strong>{{ key.email }}</p>
-                <p><strong class="fr-tile__title">Referer : </strong>{{ key.referer }}</p>
-                <p><strong class="fr-tile__title">Rôle : </strong>{{ key.role }}</p>
-              </div>
-
-              <div class="fr-tile__body">
-                <button type="button" class="edit-btn fr-btn fr-btn--sm" @click="openEditModal(key)">
-                  Modifier
-                </button>
-                <button type="button" class="delete-btn fr-btn fr-btn--sm" @click="openModal(key.appId)">
-                  Supprimer
-                </button>
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-
-        
-
-        <!-- Pagination pour visualiser tous les utilisateurs-->
-        <div class="pagination" v-if="totalPages > 1">
-          <button 
-            @click="prevPage" 
-            type="button"
-            :disabled="currentPage === 1" 
-            class="fr-btn fr-btn--tertiary-no-outline fr-icon-arrow-left-s-line"
-          >
-          </button>
-          <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-          <button 
-            @click="nextPage" 
-            :disabled="currentPage === totalPages" 
-            class="fr-btn fr-btn--tertiary-no-outline fr-icon-arrow-right-s-line"
-          >
-          </button>
-        </div>
-
-        <!-- Message si la liste des clés est vide -->
-        <div v-if="filteredKeys.length === 0" class="fr-alert fr-alert--error">
-          Aucune clé d'accès trouvée.
-        </div>
-
-      </div>
-
-      <!-- Modal de modification -->
-      <div v-if="showEditModal" class="modal-overlay">
-        <div class="fr-container fr-container--fluid fr-container-md">
-          <div class="fr-grid-row fr-grid-row--center">
-            <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
-              <div class="fr-modal__body">
-                <div class="fr-modal__header">
-                  <button @click="closeEditModal" class="fr-btn--close fr-btn" id="close">Fermer</button>
-                </div>
-                <div class="fr-modal__content">
-                  <h2 class="fr-modal__title">
-                    <span class="fr-icon-edit-line fr-icon--lg" aria-hidden="true"></span>
-                    Modifier l'utilisateur
-                  </h2>
-                  <form @submit.prevent="saveChanges">
-                    <div class="fr-input-group">
-                      <label class="fr-label" for="edit-key-name">Nom :</label>
-                      <input
-                        type="text"
-                        id="edit-key-name"
-                        v-model="editedUser.appId"
-                        class="fr-input"
-                        disabled
-                        readonly
-                      />
-                      <span class="fr-hint-text">Le nom d'utilisateur ne peut pas être modifié</span>
-                    </div>
-
-                    <div class="fr-input-group">
-                      <label class="fr-label" for="edit-email">Adresse mail associée :</label>
-                      <input 
-                        type="email" 
-                        id="edit-email" 
-                        v-model="editedUser.email" 
-                        class="fr-input" 
-                        placeholder="exemple@xyz.fr" 
-                        @input="email = editedUser.email; validateEmail()"
-                        required
-                      />
-                      <span v-if="editedUser.email && !isValidEmail" class="fr-error">
-                        L'adresse email doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme exemple@xyz.fr
-                      </span>
-                    </div>
-
-                    <div class="fr-input-group">
-                      <label class="fr-label" for="edit-key-referer">Referer :</label>
-                      <input
-                        type="text"
-                        id="edit-key-referer"
-                        v-model="editedUser.referer"
-                        class="fr-input"
-                        placeholder="Exemple : http(s)://application-client1.fr"
-                        @input="referer = editedUser.referer; validateReferer()"
-                        required
-                      />
-                      <span v-if="editedUser.referer && !isValidReferer" class="fr-error">
-                        L'URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme http(s)://application-client1.fr
-                      </span>
-                    </div>
-
-                    <div class="fr-select-group">
-                      <label class="fr-label" for="edit-select">Rôle :</label>
-                      <select id="edit-select" name="edit-select" v-model="editedUser.role" class="fr-select" required>
-                        <option value="" disabled selected hidden>Choisissez un rôle</option>
-                        <option value='admin'>Admin</option>
-                        <option value='private'>Private</option>
-                      </select>
-                    </div>
-
-                    <div class="fr.modal__footer fr-btns-group--right fr-btns-group--inline-lg fr-btns-group--icon-left">
-                      <button 
-                        type="submit" 
-                        class="fr-btn fr-btn--primary btn-enregistrer"
-                        :disabled="!isValidEmail || !isValidReferer || !editedUser.role"
-                        :class="{ 'fr-btn--disabled': !isValidEmail || !isValidReferer || !editedUser.role }"
-                      >
-                        Enregistrer les modifications
-                      </button>
-                    </div>
-
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      <!-- Modal de confirmation de suppression -->
-      <div v-if="showModal" class="modal-overlay">
-        <div class="fr-container fr-container--fluid fr-container-md">
-          <div class="fr-grid-row fr-grid-row--center">
-            <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
-              <div class="fr-modal__body">
-                <div class="fr-modal__header">
-                  <button @click="closeModal" class="fr-btn--close fr-btn" id="close">Fermer</button>
-                </div>
-
-                <div class="fr-modal__content">
-                  <h2 class="fr-modal__title">
-                    <span class="fr-icon-warning-line fr-icon--lg" aria-hidden="true"></span>
-                    Confirmation de suppression
-                  </h2>
-                  <p>Êtes-vous sûr de vouloir supprimer cette clé ?</p>
-                </div>
-
-                <div class="fr-modal__footer fr-btns-group--right fr-btns-group--inline-lg fr-btns-group--icon-left">
-                  <button @click="deleteKey" class="fr-btn fr-btn--reject">Oui, supprimer</button>
-                  <button @click="closeModal" class="fr-btn fr-btn--cancel" id="cancel">Annuler</button>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Onglet Générer une clé d'accès -->
-    <div
-      id="tabpanel-405-panel"
-      class="fr-tabs__panel"
-      :class="{ 'fr-tabs__panel--selected': activeTab === 'tabpanel-405' }"
-      role="tabpanel"
-      aria-labelledby="tabpanel-405"
-    >
-      <div class="main-content">
-
-        <div class="key-generation">
-          <h1 class="fr-h1">Générer une clé d'accès</h1>
-          <form @submit.prevent="openConfirmationModal">
-
-            <div class="fr-input-group">
-              <label class="fr-label" for="key-name">Nom :</label>
-              <input
-                type="text"
-                id="key-name"
-                v-model="keyName"
-                class="fr-input"
-                placeholder="Nom associé à la clé d'accès (minimum 5 caractères)"
-                minlength="5"
-                required
-                @input="validateKeyName"
-              />
-              <span v-if="keyName && !isValidKeyname" class="fr-error">Le nom doit comprendre au minimum 5 caractères, sans espace, et sans symboles autre que "-" et "_".</span>
-            </div>
-
-
-            <div class="fr-input-group">
-              <label class="fr-label" for="email">Adresse mail associée :</label>
-              <input type="email" id="email" v-model="email" class="fr-input" placeholder="exemple@xyz.fr" required/>
-              <span v-if="email && !isValidEmail" class="fr-error">L'adresse email doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme exemple@xyz.fr</span>
-            </div>
-
-            <div class="fr-input-group">
-              <label class="fr-label" for="key-referer">Referer :</label>
-              <input
-                type="text"
-                id="key-referer"
-                v-model="referer"
-                class="fr-input"
-                placeholder="Exemple : http(s)://application-client1.fr"
-                @input="validateReferer"
-                required
-              />
-              <span v-if="referer && !isValidReferer" class="fr-error">L'URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme http(s)://application-client1.fr</span>
-            </div>
-
-
-            <div class="fr-select-group">
-              <label class="fr-label" for="select">Rôle :</label>
-              <select id="select" name="select" v-model="role" class="fr-select" required>
-                <option value="" disabled selected hidden>Choisissez un rôle</option>
-                <option value='admin'>Admin</option>
-                <option value='private'>Private</option>
-              </select>
-            </div>
-
-            <button 
-              type="submit" 
-              class="fr-btn fr-btn--primary cle-generer" 
-              :disabled="!isFormValid"
-              :class="{ 'fr-btn--disabled': !isFormValid }"
-              >
-              Générer la clé
-            </button>
-          </form>
-        </div>
-
-        <!-- Modal de confirmation de génération -->
-        <div v-if="showConfirmationModal" class="modal-overlay">
-          <div class="fr-container fr-container--fluid fr-container-md">
-            <div class="fr-grid-row fr-grid-row--center">
-              <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
-                <div class="fr-modal__body">
-                  <div class="fr-modal__header">
-                    <button @click="generateApiKey" aria-controls="modal-6053" title="Fermer" type="button" id="button-6054" class="fr-btn--close fr-btn">Fermer</button>
-                  </div>
-
-                  <div class="fr-modal__content">
-                    <h1 id="modal-6053-title" class="fr-modal__title">
-                      <span class="fr-icon-check-line fr-icon--lg" aria-hidden="true"></span>
-                      Clé Générée
-                    </h1>
-                    <p>La clé a été générée avec succès. Un mail sera envoyé à l'adresse renseignée dans les plus brefs délais.</p>
-                  </div>
-
-                  <div class="fr-modal__footer">
-                      <div class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg fr-btns-group--icon-left">
-                        <button @click="generateApiKey" type="button" id="button-6047" class="validate-btn fr-btn fr-icon-checkbox-circle-line fr-btn--icon-left">Valider</button>
-                      </div>
-                  </div>
-
-                </div> 
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-
 <script>
 
-//import { auditService } from '@/services/audit-service';
+import {
+  DsfrTabs,
+  DsfrTabItem,
+  DsfrTabContent,
+  DsfrTag,
+  DsfrTooltip,
+  DsfrSearchBar,
+  DsfrDataTable,
+  DsfrButton,
+  DsfrButtonGroup,
+  DsfrAlert,
+  DsfrModal,
+  DsfrInput,
+  DsfrInputGroup,
+} from "@gouvminint/vue-dsfr";
 
 export default {
 
-data() {
-  return {
-    activeTab: "tabpanel-404",
-    keyName: "",
-    email: "",
-    referer: "",
-    isValidReferer: true,
-    isValidEmail: true,
-    isValidKeyname: true,
-    role: "",
-    apiKeys: [],
-    searchQuery: "",
-    showModal: false,
-    keyToDelete: null,
-    showConfirmationModal: false,
-    showMissingInfoModal: false,
-    firstObject: 1,
-    nbObjects: 20,
-    currentPage: 1,
-    totalKeys: 0,
-    itemsPerPage: 6,
-    isTooltipVisible: false,
-    selectedTag: "",
-    showEditModal: false,
-    editedUser: {
-      appId: "",
+  components: {
+    DsfrTabs,
+    DsfrTabItem,
+    DsfrTabContent,
+    DsfrTag,
+    DsfrTooltip,
+    DsfrSearchBar,
+    DsfrDataTable,
+    DsfrButton,
+    DsfrButtonGroup,
+    DsfrAlert,
+    DsfrModal,
+    DsfrInput,
+    DsfrInputGroup,
+  },
+
+  data() {
+    return {
+      activeTab: 0,
+      keyName: "",
       email: "",
       referer: "",
-      role: ""
-    },
-  };
-},
-props: {
-  apiKey: String,
-  appId: String,
-},
-computed: {
-  // Nouvelle propriété calculée pour déterminer si le formulaire est valide
-  isFormValid() {
-    return (
-      this.keyName && 
-      this.keyName.length >= 5 && 
-      this.isValidKeyname &&
-      this.email && 
-      this.isValidEmail && 
-      this.referer && 
-      this.isValidReferer && 
-      this.role
-    );
-  },
-  
-  //Fonction qui gère la barre de recherche 
-  filteredKeys() {
-    const filtered = this.apiKeys.filter(key => {
-      const searchQueryLower = this.searchQuery.toLowerCase();
-      
-      const appIdMatch = key.appId && key.appId.toLowerCase().includes(searchQueryLower);
-      const emailMatch = key.email && key.email.toLowerCase().includes(searchQueryLower);
-      const refererMatch = key.referer[0] && key.referer[0].toLowerCase().includes(searchQueryLower);
-
-      const matchesTag = this.selectedTag === "" || key.role === this.selectedTag;
-
-      return (appIdMatch || emailMatch || refererMatch) && matchesTag;
-    });
-
-    // Pagination
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    return filtered.slice(start, end);
-  },
-
-  totalPages() {
-    // Calcule le total des pages en se basant sur les clés filtrées
-    const filtered = this.apiKeys.filter(key => {
-      const searchQueryLower = this.searchQuery.toLowerCase();
-      
-      const appIdMatch = key.appId && key.appId.toLowerCase().includes(searchQueryLower);
-      const emailMatch = key.email && key.email.toLowerCase().includes(searchQueryLower);
-      const refererMatch = key.referer[0] && key.referer[0].toLowerCase().includes(searchQueryLower);
-
-      const matchesTag = this.selectedTag === "" || key.role === this.selectedTag;
-
-      return (appIdMatch || emailMatch || refererMatch) && matchesTag;
-    });
-
-    return Math.ceil(filtered.length / this.itemsPerPage);
-  }
-},
-methods: {
-  switchTab(tabId) {
-    this.activeTab = tabId;
-    this.fetchKeys();
-  },
-
-  validateKeyName() {
-    // Regex pour une chaîne compacte avec uniquement des lettres, chiffres, _ et -, sans espace
-    const regex = /^[a-zA-Z0-9_-]+$/;
-    this.isValidKeyname = this.keyName.length >= 5 && regex.test(this.keyName);
-    return this.keyName && this.keyName.length >= 5 && regex.test(this.keyName);
-  },
-
-  validateEmail() {
-    // Regex pour valider que l'email se termine par .xx (exactement 2 caractères)
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2}|com)$/;
-    this.isValidEmail = regex.test(this.email);
-  },
-
-  validateReferer() {
-    // Regex pour vérifier que le referer se termine par .xx (2 caractères) ou .com
-    const regex = /^(https?:\/\/)[a-zA-Z0-9-]+(\.[a-zA-Z]{2}|\.com)\/?\s*$/;
-    this.isValidReferer = regex.test(this.referer);
-  },
-
-  // Ouvrir le modal et définir la clé à supprimer
-  openModal(id) {
-    this.keyToDelete = id;
-    this.showModal = true;
-  },
-
-  // Fermer le modal sans effectuer de suppression
-  closeModal() {
-    this.showModal = false;
-    this.keyToDelete = null;
-  },
-
-  // Ouvrir le modal de confirmation pour générer une clé
-  openConfirmationModal() {
-    if (this.isFormValid) {
-      this.showConfirmationModal = true; // Affiche le modal de confirmation
-    } else {
-      this.showMissingInfoModal = true; // Affiche le modal d'erreur si les champs sont invalides
-    }
-  },
-
-  // Fermer le modal de confirmation pour générer une clé
-  closeConfirmationModal() {
-    this.showConfirmationModal = false; // Ferme le modal de confirmation
-  },
-
-  // Fermer le modal si l'utilisateur n'a pas rempli les champs
-  closeMissingInfoModal() {
-    this.showMissingInfoModal = false; // Ferme le modal d'erreur
-  },
-  //Affiche l'aide 
-  showTooltip() {
-    this.isTooltipVisible = true;
-  },
-  //Cache l'aide
-  hideTooltip() {
-    this.isTooltipVisible = false;
-  },
-
-  toggleTag(role) {
-    // Si on clique sur le tag déjà actif, on le désactive
-    this.selectedTag = this.selectedTag === role ? "" : role;
-    this.currentPage = 1;
-  },
-
-  openEditModal(user) {
-    this.editedUser = { ...user };
-    this.showEditModal = true;
-  
-    this.email = this.editedUser.email;
-    this.referer = this.editedUser.referer;
-  
-    this.validateEmail();
-    this.validateReferer();
-  },
-
-  closeEditModal() {
-    this.showEditModal = false;
-    this.email = "";
-    this.referer = "";
-    this.editedUser = {
-      appId: "",
-      email: "",
-      referer: "",
-      role: ""
+      isValidReferer: true,
+      isValidEmail: true,
+      isValidKeyname: true,
+      role: "",
+      apiKeys: [],
+      searchQuery: "",
+      showModal: false,
+      keyToDelete: null,
+      showConfirmationModal: false,
+      showMissingInfoModal: false,
+      firstObject: 1,
+      nbObjects: 20,
+      totalKeys: 0,
+      itemsPerPage: 6,
+      selectedTag: "",
+      showEditModal: false,
+      editedUser: {
+        appId: "",
+        email: "",
+        referer: "",
+        role: ""
+      },
+      userTableColumns: [
+        {
+          key: "appId",
+          label: "Nom",
+          isHeader: true,
+        },
+        {
+          key: "role",
+          label: "Rôle",
+        },
+        {
+          key: "email",
+          label: "Adresse mail",
+        },
+        {
+          key: "referer",
+          label: "Referer",
+        },
+        {
+          key: "actions",
+          label: "Actions",
+        },
+      ],
+      tableCurrentPage: 0,
     };
   },
+  props: {
+    apiKey: String,
+    appId: String,
+  },
+  computed: {
+    // Nouvelle propriété calculée pour déterminer si le formulaire est valide
+    isFormValid() {
+      return (
+          this.keyName &&
+          this.keyName.length >= 5 &&
+          this.isValidKeyname &&
+          this.email &&
+          this.isValidEmail &&
+          this.referer &&
+          this.isValidReferer &&
+          this.role
+      );
+    },
 
-  async saveChanges() {
-    this.email = this.editedUser.email;
-    this.referer = this.editedUser.referer;
-    this.validateEmail();
-    this.validateReferer();
-  
-    // Ne soumettre que si les validations passent
-    if (!this.isValidEmail || !this.isValidReferer) {
-      return;
-    }
-  
-    try {
-      const oldEmail = this.apiKeys.find(key => key.appId === this.editedUser.appId).email;
+    userTableRows() {
+      return this.apiKeys
+        .filter(key => {
+          const searchQueryLower = this.searchQuery.toLowerCase();
 
-      const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/cuser`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": this.apiKey,
-          "x-app-id": this.appId
-        },
-      body: JSON.stringify({
-        appId: this.editedUser.appId,
-        email: this.editedUser.email,
-        referer: this.editedUser.referer,
-        role: this.editedUser.role
-      })
-    });
+          const appIdMatch =
+              key.appId &&
+              key.appId.toLowerCase().includes(searchQueryLower);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
-    }
+          const emailMatch =
+              key.email &&
+              key.email.toLowerCase().includes(searchQueryLower);
 
-    const subjectNew = encodeURIComponent("Modification de votre profil utilisateur");
-    const bodyNew = encodeURIComponent(`Bonjour,
+          const refererMatch =
+              Array.isArray(key.referer) &&
+              key.referer.some(referer =>
+                  referer.toLowerCase().includes(searchQueryLower)
+              );
+
+          const matchesTag =
+              this.selectedTag === "" ||
+              key.role === this.selectedTag;
+
+          return (appIdMatch || emailMatch || refererMatch) && matchesTag;
+        })
+        .map((key) => ({
+          appId: key.appId,
+          email: key.email,
+          referer: Array.isArray(key.referer)
+              ? key.referer
+              : [key.referer],
+          role: key.role,
+          actions: key,
+        }));
+    },
+  },
+  methods: {
+    validateKeyName() {
+      // Regex pour une chaîne compacte avec uniquement des lettres, chiffres, _ et -, sans espace
+      const regex = /^[a-zA-Z0-9_-]+$/;
+      this.isValidKeyname = this.keyName.length >= 5 && regex.test(this.keyName);
+      return this.keyName && this.keyName.length >= 5 && regex.test(this.keyName);
+    },
+
+    validateEmail() {
+      // Regex pour valider que l'email se termine par .xx (exactement 2 caractères)
+      const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2}|com)$/;
+      this.isValidEmail = regex.test(this.email);
+    },
+
+    validateReferer() {
+      // Regex pour vérifier que le referer se termine par .xx (2 caractères) ou .com
+      const referers = this.referer
+          .split(',')
+          .map(referer => referer.trim())
+          .filter(Boolean);
+
+      const regex = /^(https?:\/\/)[a-zA-Z0-9-]+(\.[a-zA-Z]{2}|\.com)\/?$/;
+
+      this.isValidReferer =
+          referers.length > 0 &&
+          referers.every(referer => regex.test(referer));
+    },
+
+    // Ouvrir le modal et définir la clé à supprimer
+    openModal(id) {
+      this.keyToDelete = id;
+      this.showModal = true;
+    },
+
+    // Fermer le modal sans effectuer de suppression
+    closeModal() {
+      this.showModal = false;
+      this.keyToDelete = null;
+    },
+
+    // Ouvrir le modal de confirmation pour générer une clé
+    openConfirmationModal() {
+      if (this.isFormValid) {
+        this.showConfirmationModal = true; // Affiche le modal de confirmation
+      } else {
+        this.showMissingInfoModal = true; // Affiche le modal d'erreur si les champs sont invalides
+      }
+    },
+
+    toggleTag(role) {
+      // Si on clique sur le tag déjà actif, on le désactive
+      this.selectedTag = this.selectedTag === role ? "" : role;
+      this.tableCurrentPage = 0;
+    },
+
+    openEditModal(user) {
+      this.editedUser = {
+        ...user,
+        referer: Array.isArray(user.referer)
+          ? user.referer.join(', ')
+          : user.referer || '',
+      };
+      this.showEditModal = true;
+
+      this.email = this.editedUser.email;
+      this.referer = this.editedUser.referer;
+
+      this.validateEmail();
+      this.validateReferer();
+    },
+
+    closeEditModal() {
+      this.showEditModal = false;
+      this.email = "";
+      this.referer = "";
+      this.editedUser = {
+        appId: "",
+        email: "",
+        referer: "",
+        role: ""
+      };
+    },
+
+    async saveChanges() {
+      this.email = this.editedUser.email;
+      this.referer = this.editedUser.referer;
+      this.validateEmail();
+      this.validateReferer();
+
+      // Ne soumettre que si les validations passent
+      if (!this.isValidEmail || !this.isValidReferer) {
+        return;
+      }
+
+      const referers = this.editedUser.referer
+        .split(',')
+        .map(referer => referer.trim())
+        .filter(Boolean);
+
+      const updatedUser = {
+        ...this.editedUser,
+        referer: referers,
+      }
+
+      try {
+        const oldEmail = this.apiKeys.find(key => key.appId === updatedUser.appId).email;
+
+        const response = await fetch(
+            `http://127.0.0.1:3000/api/v1/admin/cuser`,
+            {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": this.apiKey,
+            "x-app-id": this.appId
+          },
+          body: JSON.stringify({
+            appId: updatedUser.appId,
+            email: updatedUser.email,
+            referer: updatedUser.referer,
+            role: updatedUser.role
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+        }
+
+        const subjectNew = encodeURIComponent("Modification de votre profil utilisateur");
+        const bodyNew = encodeURIComponent(`Bonjour,
 
 Nous avons procédé à une modification de votre profil utilisateur. Voici vos nouvelles informations :
 
-Nom : ${this.editedUser.appId}
-Adresse mail : ${this.editedUser.email}
-Referer : ${this.editedUser.referer}
-Rôle : ${this.editedUser.role}
+Nom : ${updatedUser.appId}
+Adresse mail : ${updatedUser.email}
+Referer : ${updatedUser.referer}
+Rôle : ${updatedUser.role}
 
 Votre clé d'accès reste inchangée.
 
@@ -598,57 +289,57 @@ Si vous n'êtes pas à l'origine de cette action ou si vous avez des questions, 
 Cordialement,
 Votre service CaptchAdmin`);
 
-    window.location.href = `mailto:${oldEmail},${this.editedUser.email}?subject=${subjectNew}&body=${bodyNew}`;
+        window.location.href = `mailto:${oldEmail},${updatedUser.email}?subject=${subjectNew}&body=${bodyNew}`;
 
-   // auditService.logUpdate('/key-access', `Modification du profil de l'utilisateur: ${this.editedUser.appId}`);
-    await this.fetchKeys();
-    this.closeEditModal();
-  } catch (error) {
-    console.error("Erreur:", error);
-    //auditService.logError('/key-access', `Échec lors de la modification du profil de l'utilisateur: ${this.editedUser.appId}`);
-  }
-},
-
-  // Méthode pour générer une nouvelle clé d'accès
-  async generateApiKey() {
-    try {
-      const response = await fetch("http://127.0.0.1:3000/api/v1/admin/cuser", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": this.apiKey,
-          "x-app-id": this.appId
-        },
-        body: JSON.stringify({
-          appId: this.keyName,
-          email: this.email,
-          referer: this.referer,
-          role: this.role
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+        // auditService.logUpdate('/key-access', `Modification du profil de l'utilisateur: ${this.editedUser.appId}`);
+        await this.fetchKeys();
+        this.closeEditModal();
+      } catch (error) {
+        console.error("Erreur:", error);
+        //auditService.logError('/key-access', `Échec lors de la modification du profil de l'utilisateur: ${this.editedUser.appId}`);
       }
+    },
 
-      const responseData = await response.json();
-      
-      // Log détaillé de la réponse
-      console.log('Réponse complète :', responseData);
+    // Méthode pour générer une nouvelle clé d'accès
+    async generateApiKey() {
+      try {
+        const response = await fetch("http://127.0.0.1:3000/api/v1/admin/cuser", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": this.apiKey,
+            "x-app-id": this.appId
+          },
+          body: JSON.stringify({
+            appId: this.keyName,
+            email: this.email,
+            referer: this.referer,
+            role: this.role
+          })
+        });
 
-      // Extraction de la clé depuis l'objet cuser
-      const generatedApiKey = responseData.cuser?.key || 
-                              responseData.cuser?.apiKey || 
-                              responseData.cuser?.access_key;
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+        }
 
-      if (!generatedApiKey) {
-        console.error('Aucune clé trouvée dans cuser', responseData.cuser);
-        throw new Error('Impossible de trouver la clé API dans la réponse');
-      }
+        const responseData = await response.json();
 
-      const subject = encodeURIComponent("Votre nouvelle clé d'accès");
-      const body = encodeURIComponent(`Bonjour,
+        // Log détaillé de la réponse
+        console.log('Réponse complète :', responseData);
+
+        // Extraction de la clé depuis l'objet cuser
+        const generatedApiKey = responseData.cuser?.key ||
+            responseData.cuser?.apiKey ||
+            responseData.cuser?.access_key;
+
+        if (!generatedApiKey) {
+          console.error('Aucune clé trouvée dans cuser', responseData.cuser);
+          throw new Error('Impossible de trouver la clé API dans la réponse');
+        }
+
+        const subject = encodeURIComponent("Votre nouvelle clé d'accès");
+        const body = encodeURIComponent(`Bonjour,
 
 Voici votre nouvelle clé d'accès :
 
@@ -660,53 +351,53 @@ Veuillez la conserver de manière sécurisée.
 Cordialement,
 Votre service CaptchAdmin`);
 
-      window.location.href = `mailto:${this.email}?subject=${subject}&body=${body}`;
+        window.location.href = `mailto:${this.email}?subject=${subject}&body=${body}`;
 
-     // auditService.logCreate('/key-access', `Création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
+        // auditService.logCreate('/key-access', `Création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
 
-      await this.fetchKeys();
-      
-      // Réinitialisation des champs
-      this.keyName = "";
-      this.email = "";
-      this.referer = "";
-      this.role = "";
-      this.showConfirmationModal = false;
+        await this.fetchKeys();
 
-    } catch (error) {
-      console.error("Erreur lors de la génération de la clé", error);
-      this.errorMessage = error.message || "Une erreur est survenue lors de la génération de la clé.";
-     // auditService.logCreate('/key-access', `Échec lors de la création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
-    }
-  },
+        // Réinitialisation des champs
+        this.keyName = "";
+        this.email = "";
+        this.referer = "";
+        this.role = "";
+        this.showConfirmationModal = false;
 
-  // Méthode pour supprimer la clé d'accès après confirmation
-  async deleteKey() {
-    const id = this.keyToDelete;
-    if (!id) return;
+      } catch (error) {
+        console.error("Erreur lors de la génération de la clé", error);
+        this.errorMessage = error.message || "Une erreur est survenue lors de la génération de la clé.";
+        // auditService.logCreate('/key-access', `Échec lors de la création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
+      }
+    },
 
-    try {
-      // Trouver l'email de l'utilisateur avant de supprimer la clé
-      const userToDelete = this.apiKeys.find(key => key.appId === id);
-      const userEmail = userToDelete?.email;
-      const userName = userToDelete?.appId;
-      
-      const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/cuser/${id}`,
-          { method: "DELETE",
-                headers: {
+    // Méthode pour supprimer la clé d'accès après confirmation
+    async deleteKey() {
+      const id = this.keyToDelete;
+      if (!id) return;
+
+      try {
+        // Trouver l'email de l'utilisateur avant de supprimer la clé
+        const userToDelete = this.apiKeys.find(key => key.appId === id);
+        const userEmail = userToDelete?.email;
+        const userName = userToDelete?.appId;
+
+        const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/cuser/${id}`,
+            { method: "DELETE",
+              headers: {
                 "Accept": "*/*",
                 "x-api-key": this.apiKey,
                 "x-app-id": this.appId
               }});
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la suppression de la clé.");
-      }
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression de la clé.");
+        }
 
-      // Si l'email existe, envoyer une notification
-      if (userEmail) {
-        const subject = encodeURIComponent("Suppression de votre clé d'accès");
-        const body = encodeURIComponent(`Bonjour,
+        // Si l'email existe, envoyer une notification
+        if (userEmail) {
+          const subject = encodeURIComponent("Suppression de votre clé d'accès");
+          const body = encodeURIComponent(`Bonjour,
 
 Nous vous informons que votre clé d'accès "${userName}" a été supprimée.
 
@@ -715,190 +406,525 @@ Si vous n'êtes pas à l'origine de cette action ou si vous avez des questions, 
 Cordialement,
 Votre service CaptchAdmin`);
 
-        window.location.href = `mailto:${userEmail}?subject=${subject}&body=${body}`;
+          window.location.href = `mailto:${userEmail}?subject=${subject}&body=${body}`;
+        }
+
+        // auditService.logDelete('/key-access', `Suppression de la clé d'accès pour l'utilisateur: ${userName}`);
+
+        await this.fetchKeys();
+        this.closeModal();
+      } catch (error) {
+        console.error("Erreur:", error);
+        // auditService.logError('/key-access', `Échec lors de la suppression de la clé d'accès pour l'utilisateur: ${this.keyToDelete}`);
       }
+    },
 
-     // auditService.logDelete('/key-access', `Suppression de la clé d'accès pour l'utilisateur: ${userName}`);
+    async fetchMoreKeys() {
+      try {
+        const response = await fetch(
+            `http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=21&nbObjects=20`,
+            {
+              method: "GET",
+              headers: {
+                "Accept": "application/json",
+                "x-api-key": this.apiKey,
+                "x-app-id": this.appId
+              },
+            }
+        );
+        const resultat = await response.json();
+        const additionalKeys = JSON.parse(JSON.stringify(resultat.cusers)) || [];
 
-      await this.fetchKeys();
-      this.closeModal();
-    } catch (error) {
-      console.error("Erreur:", error);
-     // auditService.logError('/key-access', `Échec lors de la suppression de la clé d'accès pour l'utilisateur: ${this.keyToDelete}`);
-    }
-  },
+        this.apiKeys = [...this.apiKeys, ...additionalKeys];
+        this.totalKeys = this.apiKeys.length;
+      } catch (error) {
+        console.error("Erreur lors de la récupération des clés supplémentaires", error);
+      }
+    },
 
-  prevPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-    }
-  },
-  
-  nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-    }
-  },
+    async fetchKeys() {
+      try {
+        console.log("=== fetchKeys DEBUG ===");
+        console.log("apiKey exists:", !!this.apiKey);
+        console.log("apiKey length:", this.apiKey?.length);
+        console.log("appId:", this.appId);
 
-  async fetchMoreKeys() {
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=21&nbObjects=20`,
-        {
+        if (!this.apiKey) {
+          throw new Error("apiKey est undefined ou vide");
+        }
+
+        if (!this.appId) {
+          throw new Error("appId est undefined ou vide");
+        }
+
+        const url =
+            "http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=1&nbObjects=100";
+
+        console.log("GET URL:", url);
+
+        const response = await fetch(url, {
           method: "GET",
           headers: {
             "Accept": "application/json",
             "x-api-key": this.apiKey,
             "x-app-id": this.appId
           },
+        });
+
+        console.log("HTTP status:", response.status);
+        console.log("HTTP statusText:", response.statusText);
+
+        const rawBody = await response.text();
+
+        console.log("Raw response body:", rawBody);
+
+        if (!response.ok) {
+          throw new Error(
+              `HTTP ${response.status} ${response.statusText} - ${rawBody}`
+          );
         }
-      );
-      const resultat = await response.json();
-      const additionalKeys = JSON.parse(JSON.stringify(resultat.cusers)) || [];
 
-      this.apiKeys = [...this.apiKeys, ...additionalKeys];
-      this.totalKeys = this.apiKeys.length;
-    } catch (error) {
-      console.error("Erreur lors de la récupération des clés supplémentaires", error);
-    }
-  },
+        let resultat;
 
-  async fetchKeys() {
-    try {
-      console.log("=== fetchKeys DEBUG ===");
-      console.log("apiKey exists:", !!this.apiKey);
-      console.log("apiKey length:", this.apiKey?.length);
-      console.log("appId:", this.appId);
+        try {
+          resultat = JSON.parse(rawBody);
+        } catch (parseError) {
+          console.error("Réponse non JSON:", rawBody);
+          throw parseError;
+        }
 
-      if (!this.apiKey) {
-        throw new Error("apiKey est undefined ou vide");
+        console.log("Parsed response:", resultat);
+
+        this.apiKeys = resultat.cusers || [];
+        this.totalKeys = this.apiKeys.length;
+
+      } catch (error) {
+        console.error("Erreur lors de la récupération des clés:", error);
       }
-
-      if (!this.appId) {
-        throw new Error("appId est undefined ou vide");
-      }
-
-      const url =
-          "http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=1&nbObjects=100";
-
-      console.log("GET URL:", url);
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "x-api-key": this.apiKey,
-          "x-app-id": this.appId
-        },
-      });
-
-      console.log("HTTP status:", response.status);
-      console.log("HTTP statusText:", response.statusText);
-
-      const rawBody = await response.text();
-
-      console.log("Raw response body:", rawBody);
-
-      if (!response.ok) {
-        throw new Error(
-            `HTTP ${response.status} ${response.statusText} - ${rawBody}`
-        );
-      }
-
-      let resultat;
-
-      try {
-        resultat = JSON.parse(rawBody);
-      } catch (parseError) {
-        console.error("Réponse non JSON:", rawBody);
-        throw parseError;
-      }
-
-      console.log("Parsed response:", resultat);
-
-      this.apiKeys = resultat.cusers || [];
-      this.totalKeys = this.apiKeys.length;
-
-    } catch (error) {
-      console.error("Erreur lors de la récupération des clés:", error);
-    }
-  },
-},
-
-mounted() {
-  window.scrollTo(0, 0);
-
-  if (this.apiKey) {
-    this.fetchKeys();
-  } else {
-    console.log("KeyAccess mounted: waiting for API key...");
-  }
-},
-
-watch: {
-  // Remettre à la première page quand la requête de recherche change
-  searchQuery() {
-    this.currentPage = 1;
-  },
-  // Valider l'email à chaque changement
-  email() {
-    this.validateEmail();
-  },
-  // Valider le referer à chaque changement
-  referer() {
-    this.validateReferer();
+    },
   },
 
-  apiKey(newApiKey) {
-    if (newApiKey) {
-      console.log("API key received by KeyAccess");
-      console.log("API key length:", newApiKey.length);
+  mounted() {
+    window.scrollTo(0, 0);
 
+    if (this.apiKey) {
       this.fetchKeys();
+    } else {
+      console.log("KeyAccess mounted: waiting for API key...");
+    }
+  },
+
+  watch: {
+    activeTab(newTab, oldTab) {
+      if (newTab !== oldTab) {
+        this.fetchKeys();
+      }
+    },
+
+    // Remettre à la première page quand la requête de recherche change
+    searchQuery() {
+      this.tableCurrentPage= 0;
+    },
+    // Valider l'email à chaque changement
+    email() {
+      this.validateEmail();
+    },
+    // Valider le referer à chaque changement
+    referer() {
+      this.validateReferer();
+    },
+
+    "editedUser.email"() {
+      this.email = this.editedUser.email;
+      this.validateEmail();
+    },
+
+    "editedUser.referer"() {
+      this.referer = this.editedUser.referer;
+      this.validateReferer();
+    },
+
+    apiKey(newApiKey) {
+      if (newApiKey) {
+        console.log("API key received by KeyAccess");
+        console.log("API key length:", newApiKey.length);
+
+        this.fetchKeys();
+      }
     }
   }
-}
 };
 </script>
 
+<template>
+  <div class="key-tabs">
+    <DsfrTabs
+      v-model="activeTab"
+      tab-list-name="Navigation des onglets"
+    >
+      <template #tab-items>
+        <DsfrTabItem
+            tab-id="tab-0"
+            panel-id="tab-content-0"
+            icon="ri-group-line"
+            @click="activeTab = 0"
+        >
+          Liste des utilisateurs
+        </DsfrTabItem>
+
+        <DsfrTabItem
+          tab-id="tab-1"
+          panel-id="tab-content-1"
+          icon="ri-user-add-line"
+          @click="activeTab = 1"
+        >
+          Générer une clé d'accès
+        </DsfrTabItem>
+      </template>
+
+      <!-- Onglet Liste des utilisateurs-->
+      <DsfrTabContent
+        panel-id="tab-content-0"
+        tab-id="tab-0"
+      >
+        <div class="key-list">
+          <DsfrDataTable
+            title="Liste des utilisateurs"
+            :columns="userTableColumns"
+            :rows="userTableRows"
+            pagination
+            v-model:current-page="tableCurrentPage"
+            :rows-per-page="itemsPerPage"
+            :pagination-options="[2, 6, 12, 24]"
+            size="sm"
+            v-if="userTableRows.length > 0"
+          >
+            <template #tableTopBarSearch>
+              <div class="search-container">
+                <div class="tag-container">
+                  <DsfrTag
+                    label="Admin"
+                    value="admin"
+                    selectable
+                    :selected="selectedTag === 'admin'"
+                    @select="toggleTag('admin')"
+                  />
+
+                  <DsfrTag
+                    label="Private"
+                    value="private"
+                    selectable
+                    :selected="selectedTag === 'private'"
+                    @select="toggleTag('private')"
+                  />
+                </div>
+
+                <DsfrTooltip
+                  content="Vous pouvez rechercher via le nom, l'adresse mail ou le referer."
+                  :on-hover="true"
+                  class="tooltip-container"
+                >
+                  <span
+                    class="fr-icon-information-line"
+                    aria-label="Informations sur la recherche"
+                  />
+                </DsfrTooltip>
+
+                <DsfrSearchBar
+                  v-model="searchQuery"
+                  placeholder="Rechercher"
+                  button-text="Rechercher"
+                />
+              </div>
+            </template>
+
+            <template #cell="{ colKey, cell }">
+              <template v-if="colKey === 'actions'">
+                <DsfrButtonGroup
+                  inline-layout-when="always"
+                  size="sm"
+                >
+                  <DsfrButton
+                    label="Modifier"
+                    size="sm"
+                    @click="openEditModal(cell)"
+                  />
+
+                  <DsfrButton
+                    label="Supprimer"
+                    size="sm"
+                    secondary
+                    @click="openModal(cell.appId)"
+                  />
+                </DsfrButtonGroup>
+              </template>
+
+              <template v-else-if="colKey === 'referer'">
+                <ul v-if="Array.isArray(cell) && cell.length">
+                  <li v-for="(referer, index) in cell" :key="index">
+                    {{ referer }}
+                  </li>
+                </ul>
+
+                <span v-else>
+                  -
+                </span>
+              </template>
+
+              <template v-else>
+                {{ cell }}
+              </template>
+            </template>
+          </DsfrDataTable>
+
+          <!-- Message si la liste des clés est vide -->
+          <DsfrAlert
+            v-if="userTableRows.length === 0"
+            type="error"
+            title="Aucune clé d'accès trouvée."
+          />
+
+        </div>
+
+        <!-- Modal de modification -->
+        <DsfrModal
+          title="Modifier l'utilisateur"
+          :opened="showEditModal"
+          size="md"
+          icon="ri-edit-line"
+          @close="closeEditModal"
+        >
+          <form @submit.prevent="saveChanges">
+
+            <DsfrInputGroup
+              v-model="editedUser.appId"
+              label="Nom :"
+              hint="Le nom d'utilisateur ne peut pas être modfifié"
+              type="text"
+              disabled
+              readonly
+            />
+
+            <DsfrInputGroup
+              v-model="editedUser.email"
+              label="Adresse mail associée :"
+              type="email"
+              placeholder="exemple@xyz.fr"
+              required
+              :error-message="
+                editedUser.email && !isValidEmail
+                  ? 'L\'adresse email doit se terminer par un domaine à exactement 2 caractères ' +
+                    '(ex: .fr, .uk, .de) ou par .com, et être de la forme exemple@xyz.fr'
+                  : undefined
+              "
+            />
+
+            <DsfrInputGroup
+              v-model="editedUser.referer"
+              label="Referer :"
+              type="text"
+              placeholder="Exemple : http(s)://application-client1.fr, http(s)://application-client2.fr"
+              required
+              :error-message="
+                editedUser.referer && !isValidReferer
+                  ? 'L’URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, ' +
+                  '.de) ou par .com, et être de la forme http(s)://application-client1.fr'
+                  : undefined
+              "
+            />
+
+            <div class="fr-select-group">
+              <label class="fr-label" for="edit-select">
+                Rôle :
+              </label>
+
+              <select
+                  id="edit-select"
+                  name="edit-select"
+                  v-model="editedUser.role"
+                  class="fr-select"
+                  required
+              >
+                <option value="" disabled hidden>
+                  Choisissez un rôle
+                </option>
+                <option value="admin">
+                  Admin
+                </option>
+                <option value="private">
+                  Private
+                </option>
+              </select>
+            </div>
+          </form>
+
+          <template #footer>
+            <DsfrButtonGroup
+              align="right"
+              inline-layout-when="large"
+              reverse
+            >
+              <DsfrButton
+                label="Enregistrer les modifications"
+                :disabled="!isValidEmail || !isValidReferer || !editedUser.role"
+                @click="saveChanges"
+              />
+
+              <DsfrButton
+                label="Annuler"
+                secondary
+                @click="closeEditModal"
+              />
+            </DsfrButtonGroup>
+          </template>
+        </DsfrModal>
+
+
+        <!-- Modal de confirmation de suppression -->
+        <div v-if="showModal" class="modal-overlay">
+          <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+              <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                <div class="fr-modal__body">
+                  <div class="fr-modal__header">
+                    <button @click="closeModal" class="fr-btn--close fr-btn" id="close">Fermer</button>
+                  </div>
+
+                  <div class="fr-modal__content">
+                    <h2 class="fr-modal__title">
+                      <span class="fr-icon-warning-line fr-icon--lg" aria-hidden="true"></span>
+                      Confirmation de suppression
+                    </h2>
+                    <p>Êtes-vous sûr de vouloir supprimer cette clé ?</p>
+                  </div>
+
+                  <div class="fr-modal__footer fr-btns-group--right fr-btns-group--inline-lg fr-btns-group--icon-left">
+                    <button @click="deleteKey" class="fr-btn fr-btn--reject">Oui, supprimer</button>
+                    <button @click="closeModal" class="fr-btn fr-btn--cancel" id="cancel">Annuler</button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DsfrTabContent>
+
+      <!-- Onglet Générer une clé d'accès -->
+      <DsfrTabContent
+        panel-id="tab-content-1"
+        tab-id="tab-1"
+      >
+        <div class="main-content">
+
+          <div class="key-generation">
+            <h1 class="fr-h1">Générer une clé d'accès</h1>
+            <form @submit.prevent="openConfirmationModal">
+
+              <div class="fr-input-group">
+                <label class="fr-label" for="key-name">Nom :</label>
+                <input
+                    type="text"
+                    id="key-name"
+                    v-model="keyName"
+                    class="fr-input"
+                    placeholder="Nom associé à la clé d'accès (minimum 5 caractères)"
+                    minlength="5"
+                    required
+                    @input="validateKeyName"
+                />
+                <span v-if="keyName && !isValidKeyname" class="fr-error">Le nom doit comprendre au minimum 5 caractères, sans espace, et sans symboles autre que "-" et "_".</span>
+              </div>
+
+
+              <div class="fr-input-group">
+                <label class="fr-label" for="email">Adresse mail associée :</label>
+                <input type="email" id="email" v-model="email" class="fr-input" placeholder="exemple@xyz.fr" required/>
+                <span v-if="email && !isValidEmail" class="fr-error">L'adresse email doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme exemple@xyz.fr</span>
+              </div>
+
+              <div class="fr-input-group">
+                <label class="fr-label" for="key-referer">Referer :</label>
+                <input
+                    type="text"
+                    id="key-referer"
+                    v-model="referer"
+                    class="fr-input"
+                    placeholder="Exemple : http(s)://application-client1.fr"
+                    @input="validateReferer"
+                    required
+                />
+                <span v-if="referer && !isValidReferer" class="fr-error">L'URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme http(s)://application-client1.fr</span>
+              </div>
+
+
+              <div class="fr-select-group">
+                <label class="fr-label" for="select">Rôle :</label>
+                <select id="select" name="select" v-model="role" class="fr-select" required>
+                  <option value="" disabled selected hidden>Choisissez un rôle</option>
+                  <option value='admin'>Admin</option>
+                  <option value='private'>Private</option>
+                </select>
+              </div>
+
+              <button
+                  type="submit"
+                  class="fr-btn fr-btn--primary cle-generer"
+                  :disabled="!isFormValid"
+                  :class="{ 'fr-btn--disabled': !isFormValid }"
+              >
+                Générer la clé
+              </button>
+            </form>
+          </div>
+
+          <!-- Modal de confirmation de génération -->
+          <div v-if="showConfirmationModal" class="modal-overlay">
+            <div class="fr-container fr-container--fluid fr-container-md">
+              <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                  <div class="fr-modal__body">
+                    <div class="fr-modal__header">
+                      <button @click="generateApiKey" aria-controls="modal-6053" title="Fermer" type="button" id="button-6054" class="fr-btn--close fr-btn">Fermer</button>
+                    </div>
+
+                    <div class="fr-modal__content">
+                      <h1 id="modal-6053-title" class="fr-modal__title">
+                        <span class="fr-icon-check-line fr-icon--lg" aria-hidden="true"></span>
+                        Clé Générée
+                      </h1>
+                      <p>La clé a été générée avec succès. Un mail sera envoyé à l'adresse renseignée dans les plus brefs délais.</p>
+                    </div>
+
+                    <div class="fr-modal__footer">
+                      <div class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg fr-btns-group--icon-left">
+                        <button @click="generateApiKey" type="button" id="button-6047" class="validate-btn fr-btn fr-icon-checkbox-circle-line fr-btn--icon-left">Valider</button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DsfrTabContent>
+    </DsfrTabs>
+  </div>
+</template>
+
 <style scoped>
 
-/* Styles des onglets à sélectionner */
-.fr-tabs__tab--selected {
-background-color: #007bff;
-color: white;
-}
-
-.fr-tabs{
-margin-left: 50px;
-margin-right: 50px;
-margin-top: 170px;  
-}
-
-/* Masquer les panels inactifs tout en maintenant leur espace */
-.fr-tabs__panel {
-visibility: hidden; 
-opacity: 0; 
-transition: opacity 0.1s ease, visibility 0.3s ease;
-}
-
-/* Afficher le panel sélectionné */
-.fr-tabs__panel--selected {
-visibility: visible;
-opacity: 1; 
+.key-tabs {
+  margin-left: 50px;
+  margin-right: 50px;
+  margin-top: 170px;
 }
 
 
 /* Styles pour la recherche d'utilisateur */
 .key-list {
 margin: 1em;
-}
-
-.barre {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding-bottom: 20px;
 }
 
 .barre h1 {
@@ -936,24 +962,6 @@ color: #3a3a3a;
 padding: 1em;
 }
 
-.delete-btn {
-background-color: red;
-color: white;
-}
-
-.delete-btn:hover {
-background-color: #c82333;
-color: white;
-}
-
-.edit-btn {
-  margin-right: 10px;
-}
-
-.btn-enregistrer{
-  margin-left: 0 auto;
-}
-
 .fr-btn--disabled {
 opacity: 0.5;
 cursor: not-allowed;
@@ -983,10 +991,6 @@ display: block;
 margin-left: auto;
 }
 
-.fr-alert {
-margin: 15px;
-}
-
 /* Modal */
 
 .modal-overlay {
@@ -1002,81 +1006,6 @@ margin: 15px;
   z-index: 1000;
 }
 
-.modal-content {
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
-  width: 100%;
-  z-index: 1001;
-}
-
-.modal-actions {
-display: flex;
-justify-content: space-between;
-align-items: flex-end; 
-}
-
-.modal-actions .btn-cancel {
-background-color: #ddd;
-color: #3a3a3a;
-align-self: flex-end; 
-}
-
-.modal-actions .btn-cancel:hover {
-background-color: #c1c1c1;
-}
-
-
-.modal-actions button {
-width: 48%;
-}
-
-.modal-actions .btn-delete {
-background-color: red;
-color: white;
-}
-
-.modal-actions .btn-delete:hover {
-background-color: #c82333;
-}
-
-.modal-actions .btn-cancel {
-background-color: #ddd;
-color: #3a3a3a;
-}
-
-.modal-actions .btn-cancel:hover {
-background-color: #c1c1c1;
-}
-
-
-/* Pagination */
-
-.pagination {
-display: flex;
-justify-content: center;
-align-items: center;
-margin-top: 20px;
-}
-
-.pagination-btn:disabled {
-background-color: #ccc;
-cursor: not-allowed;
-}
-
-.page-info {
-font-weight: bold;
-}
-
-
-.fr-tile__title {
-font-size: 1rem;  
-margin-bottom: 0.25rem;  
-line-height: 1.2;  
-}
-
 .search-container {
 display: flex;
 align-items: center; 
@@ -1089,44 +1018,4 @@ gap: 8px;
 .tag-container {
 margin-right: 25px;
 }
-
-.fr-tags-group .fr-tag{
-vertical-align: middle;
-margin-bottom: 0px;
-}
-
-.tooltip-container {
-position: relative;
-}
-
-.tooltip-button {
-background-color: #007bff;
-color: white;
-border: none;
-padding: 8px;
-cursor: pointer;
-border-radius: 5px;
-}
-
-.custom-tooltip {
-position: absolute;
-bottom: 100%;
-left: 50%;
-transform: translateX(-50%);
-background-color: rgb(21, 21, 21);
-color: white;
-padding: 6px 10px;
-border-radius: 4px;
-white-space: nowrap;
-font-size: 14px;
-visibility: visible;
-opacity: 1;
-transition: opacity 0.3s ease-in-out;
-}
-
-.tooltip-container:hover .custom-tooltip {
-visibility: visible;
-opacity: 1;
-}
-
 </style>
