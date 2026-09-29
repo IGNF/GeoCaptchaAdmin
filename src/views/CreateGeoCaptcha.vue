@@ -25,6 +25,7 @@ import {
   DsfrInputGroup,
   DsfrAlert,
   DsfrModal,
+  DsfrFieldset
 } from "@gouvminint/vue-dsfr";
 
 /*Service de logs*/
@@ -82,6 +83,7 @@ export default {
     DsfrInputGroup,
     DsfrAlert,
     DsfrModal,
+    DsfrFieldset,
   },
   props: {
     apiKey: String,
@@ -741,18 +743,21 @@ export default {
               <div class="fr-col-12 fr-col-md-9 fr-col-lg-8"> 
 
                 <!-- Zone du formulaire -->
-                <label class="fr-label label_param" for="select-hint">
-                  <span class="fr-h4">Paramètres de génération</span> 
-                  <span class="fr-hint-text">En choisissant un mode, vous pourrez générer un GéoCaptcha en France métropolitaine et dans les DOM-TOM.</span>
-                </label>
                 <form @submit.prevent="validateAndCreateGeoCaptcha">
-                  <div class="fr-input-group">
+                  <DsfrFieldset>
+                    <template #legend>
+                      <span class="fr-h4">Paramètres de génération</span>
+                    </template>
+
+                    <template #hint>
+                      En choisissant un mode, vous pourrez générer un GéoCaptcha en France métropolitaine et dans les DOM-TOM.
+                    </template>
 
                     <!-- Choix parmis les 3 options : Sur la carte, Coordonnées précises et Aléatoire -->
                     <DsfrSegmentedSet
-                      v-model="selectedOption"
-                      name="segmented-2073"
-                      :options="[
+                        v-model="selectedOption"
+                        name="segmented-2073"
+                        :options="[
                           {
                             value: '1',
                             label: 'Sur la carte',
@@ -769,9 +774,9 @@ export default {
                             icon: 'ri-question-mark'
                           }
                       ]"
-                      @update:model-value="handleOptionChange"
+                        @update:model-value="handleOptionChange"
                     />
-                    
+
                     <!-- Phrase en fonction de l'option choisi -->
                     <p v-if="selectedOption === '1'" class="choix-zone">Sélectionnez une zone où un GéoCaptcha sera généré. Cliquez une première fois pour initier la sélection, étendez la zone, puis cliquez à nouveau pour valider.</p>
                     <p v-if="selectedOption === '2'" class="choix-zone">Le GéoCaptcha sera généré dans le département de France que vous aurez choisi.</p>
@@ -780,109 +785,106 @@ export default {
                     <!-- Option Coordonnées précises -->
                     <div v-if="selectedOption === '2'">
                       <DsfrSelect
-                        v-model="selectedDepartement"
-                        label="Département"
-                        :options="departements.map(dept => ({
+                          v-model="selectedDepartement"
+                          label="Département"
+                          :options="departements.map(dept => ({
                           value: dept.code,
                           text: `${dept.code} - ${dept.nom}`
                         }))"
-                        placeholder="Sélectionner un département"
-                        required
+                          placeholder="Sélectionner un département"
+                          required
                       />
 
                       <DsfrInputGroup
-                        v-model="latitude"
-                        type="number"
-                        step="any"
-                        label="Latitude"
-                        :placeholder="latitudePlaceholder"
-                        :error-message="latitudeError"
-                        required
+                          v-model="latitude"
+                          type="number"
+                          step="any"
+                          label="Latitude"
+                          :placeholder="latitudePlaceholder"
+                          :error-message="latitudeError"
+                          required
                       />
 
                       <DsfrInputGroup
-                        v-model="longitude"
-                        type="number"
-                        step="any"
-                        label="Longitude"
-                        :placeholder="longitudePlaceholder"
-                        :error-message="longitudeError"
-                        required
+                          v-model="longitude"
+                          type="number"
+                          step="any"
+                          label="Longitude"
+                          :placeholder="longitudePlaceholder"
+                          :error-message="longitudeError"
+                          required
                       />
 
                       <DsfrInputGroup
-                        v-model="zipcode"
-                        type="text"
-                        label="Code postal"
-                        placeholder="Entrez un code postal"
-                        :error-message="zipcodeError"
-                        required
+                          v-model="zipcode"
+                          type="text"
+                          label="Code postal"
+                          placeholder="Entrez un code postal"
+                          :error-message="zipcodeError"
+                          required
                       />
-                    </div>           
+                    </div>
 
                     <!-- Option Aléatoire -->
                     <div v-if="selectedOption === '3'">
                       <DsfrInputGroup
-                        v-model="randomDepartement.nom"
-                        label="Dépatement aléatoire"
-                        readonly
+                          v-model="randomDepartement.nom"
+                          label="Dépatement aléatoire"
+                          readonly
                       />
 
                       <DsfrInputGroup
-                        v-model="latitude"
-                        type="number"
-                        step="any"
-                        label="Latitude"
-                        :placeholder="latitudePlaceholder"
-                        readonly
+                          v-model="latitude"
+                          type="number"
+                          step="any"
+                          label="Latitude"
+                          :placeholder="latitudePlaceholder"
+                          readonly
                       />
 
                       <DsfrInputGroup
-                        v-model="longitude"
-                        type="number"
-                        step="any"
-                        label="Longitude"
-                        :placeholder="longitudePlaceholder"
-                        readonly
+                          v-model="longitude"
+                          type="number"
+                          step="any"
+                          label="Longitude"
+                          :placeholder="longitudePlaceholder"
+                          readonly
                       />
 
                       <DsfrInputGroup
-                        v-model="zipcode"
-                        type="text"
-                        label="Code postal"
-                        readonly
+                          v-model="zipcode"
+                          type="text"
+                          label="Code postal"
+                          readonly
                       />
                     </div>
 
                     <!-- Option Sur la carte -->
                     <div v-if="selectedOption === '1'">
                       <div class="map-container">
-                        
+
                         <!-- Carte -->
                         <div id="map" class="map"></div>
-                        
-                        <div class="row mt-3">
-                          <div class="col-auto">
-                            <DsfrButton
-                              label="Annuler la sélection"
-                              secondary
-                              type="button"
-                              @click="undoDraw"
-                            />
-                          </div>
-                        </div>
-                      
+
+                        <DsfrButton
+                            class="mt-3"
+                            label="Annuler la sélection"
+                            secondary
+                            type="button"
+                            @click="undoDraw"
+                        />
+
                         <div v-if="boxCoordinates.length > 0" class="mt-3">
                           <div v-if="randomPoint">
                             <p><strong>Point aléatoire dans la boîte :</strong></p>
 
                             <DsfrInputGroup
-                              v-model="latitude"
-                              type="number"
-                              step="any"
-                              label="Latitude"
-                              :placeholder="latitudePlaceholder"
-                              readonly
+                                v-model="latitude"
+                                type="number"
+                                step="any"
+                                label="Latitude"
+                                :placeholder="latitudePlaceholder"
+                                readonly
                             />
 
                             <DsfrInputGroup
@@ -908,9 +910,9 @@ export default {
 
                     <!-- Choix du mode -->
                     <DsfrSelect
-                      v-model="mode"
-                      label="Mode :"
-                      :options="[
+                        v-model="mode"
+                        label="Mode :"
+                        :options="[
                           {
                             value: 'ortho',
                             text: 'Ortho',
@@ -924,40 +926,56 @@ export default {
                             text: 'Scan',
                           }
                       ]"
-                      placeholder="Choisissez un mode"
-                      required
+                        placeholder="Choisissez un mode"
+                        required
                     />
 
                     <!-- Bouton pour générer une tuile -->
-                    <div class="button-container">
-                      <div v-if="selectedOption === '3'" class="tooltip-container">
-                        <label @click="closeDepartement" class="fr-icon-refresh-line"></label>
-                      </div>
+                    <DsfrButtonGroup
+                        v-if="selectedOption === '3'"
+                        align="right"
+                        inline-layout-when="large"
+                    >
+                      <li>
+                        <DsfrButton
+                            type="button"
+                            icon="ri-refresh-line"
+                            secondary
+                            iconOnly
+                            title="Choisir un autre département"
+                            aria-label="Choisir un autre département"
+                            @click="closeDepartement"
+                        />
+                      </li>
 
-                      <DsfrButton
-                        type="submit"
-                        label="Générer"
-                      />
-                    </div>
+                      <li>
+                        <DsfrButton
+                            type="submit"
+                            label="Générer"
+                        />
+                      </li>
+                    </DsfrButtonGroup>
 
                     <!-- Alerte d'acceptation de la tuile -->
                     <DsfrAlert
-                      v-if="isSuccess"
-                      type="success"
-                      title="Succès de la création"
+                        v-if="isSuccess"
+                        type="success"
+                        title="Succès de la création"
                     >
                       {{ successMessage }}
                     </DsfrAlert>
 
                     <!-- Alerte de refus de la tuile -->
                     <DsfrAlert
-                      v-if="isRefuse"
-                      type="info"
-                      title="Tuile refusée"
+                        v-if="isRefuse"
+                        type="info"
+                        title="Tuile refusée"
                     >
                       GéoCaptcha non enregistré.
                     </DsfrAlert>
-                  </div>
+                  </DsfrFieldset>
+
+
                   
                   <!-- Modale avec la tuile générée -->
                   <DsfrModal
@@ -1009,18 +1027,22 @@ export default {
                           inline-layout-when="large"
                           reverse
                       >
-                        <DsfrButton
-                            label="Accepter"
-                            icon="ri-checkbox-circle-line"
-                            @click="handleConserver"
-                        />
+                        <li>
+                          <DsfrButton
+                              label="Accepter"
+                              icon="ri-checkbox-circle-line"
+                              @click="handleConserver"
+                          />
+                        </li>
 
-                        <DsfrButton
-                            label="Refuser"
-                            secondary
-                            icon="ri-close-circle-line"
-                            @click="closeModal"
-                        />
+                        <li>
+                          <DsfrButton
+                              label="Refuser"
+                              secondary
+                              icon="ri-close-circle-line"
+                              @click="closeModal"
+                          />
+                        </li>
                       </DsfrButtonGroup>
                     </template>
                   </DsfrModal>
@@ -1061,18 +1083,9 @@ export default {
 
 /* Styles pour le formulaire */
 
-.row {
-  margin-top: 20px;
-}
-
 .fr-h1 {
   margin-top: 170px; 
   text-align: center;
-}
-
-.label_param {
-  text-align: center;
-  margin-bottom: 20px;
 }
 
 .choix-zone {
@@ -1080,102 +1093,11 @@ export default {
   margin-bottom: -20px;
 }
 
-.lat-format {
-  margin-top: 25px;
-}
-
-.mode-format {
-  margin-top: 25px;
-}
-
 form {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
-}
-
-.tag-undo{
-  margin-left: auto !important;
-}
-
-.button-container {
-  display: flex;
-  align-items: center; 
-  gap: 10px; 
-}
-
-.tag-group {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.btn-generer {
-  display: block;
-  margin-left: auto;
-} 
-
-
-/* Styles pour le modal */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; 
-}
-
-.fr-modal__title {
-  margin-bottom: 1em;
-  text-align: center;
-}
-
-.fr-modal__content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.accept-btn{
-  outline: 2px solid rgb(0,0,145);
-}
-
-.accept-btn:hover{
-  outline: 2px solid rgb(18,18,255);
-}
-
-.refuse-btn {
-  color: red;
-  outline: 2px solid red;
-}
-
-.hidden {
-  visibility: hidden;
-  opacity: 0;
-}
-
-.fr-error-text {
-  color: red;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-.fr-icon-refresh-line:hover {
-  color: rgb(0,0,145);
-  cursor: pointer;  
-}
-
-#alert-1068 {
-  margin-top:1em;
 }
 
 /* Styles pour le défi géocaptcha */
