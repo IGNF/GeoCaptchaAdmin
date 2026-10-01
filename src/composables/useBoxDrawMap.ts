@@ -10,7 +10,7 @@ import FullScreen from 'ol/control/FullScreen.js'
 import { defaults as defaultControls } from 'ol/control/defaults.js'
 import { XYZ } from 'ol/source'
 import { fromLonLat, transformExtent } from 'ol/proj'
-import type { BBox } from '@/utils/geo/random'
+import type { BBox } from '@/utils/geo/coordinates'
 
 /**
  * IGN Plan IGN WMTS tile source.
@@ -36,7 +36,7 @@ interface Options {
      * Called when the user finishes drawing a bounding box.
      *
      * The bounding box is provided in geographic coordinates as
-     * `[minLon, maxLon, minLat, maxLat]`.
+     * `[minLon, minLat, maxLon, maxLat]`.
      */
     onBoxDrawn: (bbox: BBox) => void
 

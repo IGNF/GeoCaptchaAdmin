@@ -5,11 +5,11 @@ import type {
     Polygon,
     MultiPolygon
 } from "geojson";
-import {
-    randomPointWhere,
-    type BBox,
-    type LonLat
-} from "@/utils/geo/random";
+import type {
+    BBox,
+    LonLat
+} from "@/utils/geo/coordinates";
+import { randomPointWhere } from "@/utils/geo/random";
 
 /**
  * GeoJSON collection containing the polygons and multi-polygons used to represent France,
@@ -90,7 +90,7 @@ export function useFranceGeometry() {
      * The function makes a finite number of attempts and returns `null` if no matching point is
      * found.
      *
-     * @param bbox - Bounding box in the form `[minLon, maxLon, minLat, maxLat]`.
+     * @param bbox - Bounding box in the form `[minLon, minLat, maxLon, maxLat]`.
      * @returns A random point inside France and `bbox`, or null if no suitable point is found
      * within the allowed number of attempts.
      *

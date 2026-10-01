@@ -2,7 +2,8 @@
   import { onMounted, ref } from "vue"
   import { DsfrButton } from "@gouvminint/vue-dsfr"
   import { useBoxDrawMap } from "@/composables/useBoxDrawMap"
-  import type { BBox } from "@/utils/geo/random"
+
+  import {BBox} from "@/utils/geo/coordinates";
 
   const emit = defineEmits<{
     (e: 'box-drawn', bbox: BBox): void
