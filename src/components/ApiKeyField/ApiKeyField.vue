@@ -1,7 +1,7 @@
 <script lang="ts" setup>
   import type { ApiKeyFieldProps} from "./ApiKeyField.types";
 
-  import { computed } from 'vue'
+  import { computed, useId } from 'vue'
   import { DsfrButton, DsfrInput } from "@gouvminint/vue-dsfr";
 
   const props = withDefaults(defineProps<ApiKeyFieldProps>(), {
@@ -23,7 +23,7 @@
   }>()
 
   // Unique ID per-instance (for both desktop and mobile display
-  const uid = Math.random().toString(36).slice(2, 8)
+  const uid = useId()
   const inputId = computed(() => props.id || `api-key-input-${uid}`)
   const buttonText = computed(() => (props.locked ? props.editText : props.validateText))
 </script>
