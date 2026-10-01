@@ -8,10 +8,10 @@ import Draw, { createBox } from "ol/interaction/Draw.js";
 import TileLayer from "ol/layer/Tile.js";
 import VectorLayer from "ol/layer/Vector.js";
 import FullScreen from 'ol/control/FullScreen.js';
-import {defaults as defaultControls} from 'ol/control/defaults.js';
+import { defaults as defaultControls } from 'ol/control/defaults.js';
 import { fromLonLat, toLonLat } from "ol/proj";
 import VectorSource from "ol/source/Vector.js";
-import {XYZ} from 'ol/source';
+import { XYZ } from 'ol/source';
 
 /*Bibliothèque Turf*/
 import * as turf from "@turf/turf";
@@ -66,6 +66,8 @@ export default {
       boxCoordinates: [],
       randomPoint: null,
       showAlert: false,
+      alertTitle: "Erreur",
+      alertMessage: "",
 
       rotationAngle: Math.floor(Math.random() * 360),
       backgroundMode: "", // Pour stocker le mode de fond différent
@@ -127,6 +129,16 @@ export default {
   },
 
   methods: {
+    showErrorAlert(title, message) {
+      this.alertTitle = title;
+      this.alertMessage = message;
+      this.showAlert = true;
+
+      setTimeout(() => {
+        this.showAlert = false;
+      }, 3000);
+    },
+
     async validateAndCreateGeoCaptcha() {
       this.latitudeError = "";
       this.longitudeError = "";
@@ -136,7 +148,11 @@ export default {
       // Cas "Sur la carte"
       if (this.selectedOption === '1') {
         if (!this.randomPoint) {
-          alert("Veuillez dessiner une boîte et générer un point aléatoire sur la carte.");
+          this.showErrorAlert(
+              "Zone non sélectionnée",
+              "Veuillez dessiner une boîte et générer un point aléatoire sur la carte."
+          );
+
           return;
         }
         this.latitude = this.randomPoint[1];
@@ -673,11 +689,11 @@ export default {
       const validPoint = this.isPointInFrance(randomLon, randomLat);
 
       if (!validPoint) {
-        alert("❌ Impossible de générer un GéoCaptcha en dehors de la France. Veuillez sélectionner une zone en France.");
-        this.showAlert = true;
-        setTimeout(() => {
-          this.showAlert = false;
-        }, 3000);
+        this.showErrorAlert(
+            "Zone invalide",
+            "Impossible de générer un GéoCaptcha en dehors de la France. Veuillez sélectionner une zone en France."
+        );
+
         this.latitude = '';
         this.longitude = '';
         this.zipcode = '';
@@ -895,16 +911,15 @@ export default {
                                 :placeholder="longitudePlaceholder"
                                 readonly
                             />
-
-                            <DsfrAlert
-                                v-if="showAlert"
-                                type="error"
-                                title="Erreur"
-                            >
-                              Impossible de générer un GéoCaptcha en dehors de la France. Veuillez sélectionner une zone en France.
-                            </DsfrAlert>
                           </div>
                         </div>
+                        <DsfrAlert
+                            v-if="showAlert"
+                            type="error"
+                            :title="alertTitle"
+                        >
+                          {{ alertMessage }}
+                        </DsfrAlert>
                       </div>
                     </div>
 
@@ -932,11 +947,10 @@ export default {
 
                     <!-- Bouton pour générer une tuile -->
                     <DsfrButtonGroup
-                        v-if="selectedOption === '3'"
                         align="right"
                         inline-layout-when="large"
                     >
-                      <li>
+                      <li v-if="selectedOption === '3'">
                         <DsfrButton
                             type="button"
                             icon="ri-refresh-line"
@@ -1063,8 +1077,7 @@ export default {
 .map {
   width: 100%;
   height: 300px;
-  z-index: 1000;
-  margin-top: 40px;
+  z-index: 100;
   border-radius: 20px; 
   overflow: hidden; 
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
@@ -1082,6 +1095,11 @@ export default {
 
 
 /* Styles pour le formulaire */
+.map-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
 .fr-h1 {
   margin-top: 170px; 
@@ -1090,7 +1108,6 @@ export default {
 
 .choix-zone {
   margin-top: 20px;
-  margin-bottom: -20px;
 }
 
 form {
