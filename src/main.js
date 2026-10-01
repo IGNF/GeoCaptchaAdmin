@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 import '@gouvfr/dsfr/dist/dsfr.min.css';
+import '@gouvminint/vue-dsfr/styles'
 import '@gouvfr/dsfr/dist/utility/utility.min.css';
 //import { auditService } from './services/audit-service';
 
