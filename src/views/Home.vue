@@ -1,165 +1,191 @@
-<script>
-import {
-  DsfrCallout,
-  DsfrButton,
-  DsfrAlert,
-} from "@gouvminint/vue-dsfr";
-
-export default {
-  data() {
-    return {
-      challengeId: null, 
-      imageUrl: null, 
-      validationMessage: null, 
-      geoCaptchaLoaded: false, 
-      apiBaseUrl: 'http://127.0.0.1:3000/api/v1',
-
-      infoTitle: 'GeoCaptcha - Sécurisation innovante',
-      introParagraphs: [
-          `Lorsque vous arrivez sur un site internet, il vous est souvent demandé si vous êtes un humain ou un robot. Pour prouver votre humanité, vous devez résoudre un captcha, souvent sous la forme de texte à déchiffrer ou de sélection d'images.`,
-          `L'IGN, via la Mission Architecture Réseau et Sécurité (MARS), propose une innovation : les GéoCaptcha. Ces captchas reposent sur des données géographiques, offrant une alternative ludique et respectueuse de la vie privée tout en sensibilisant à la donnée géospatiale.`,
-          `Grâce à cette interface, vous pouvez administrer les GéoCaptcha, consulter les statistiques d'utilisation et gérer les clés d'accès. Une solution clé en main pour renforcer la sécurité numérique et l'intégrité des données géographiques.`
-      ]
-    };
-  },
-  components: {
+<script setup>
+  import { ref, onMounted, computed } from "vue";
+  import {
     DsfrCallout,
     DsfrButton,
     DsfrAlert,
-  },
-  props: {
+  } from "@gouvminint/vue-dsfr";
+
+  const props = defineProps({
     apiKey: String,
     appId: String,
-  },
-  methods: {
-    // Charge dynamiquement le script GeoCaptcha
-    async loadGeoCaptchaScript() {
-      return new Promise((resolve, reject) => {
-        const scriptUrl = `${this.apiBaseUrl}/lib.js`;
+  });
 
-        const existingScript = document.querySelector(
-            `script[src='${scriptUrl}']`
-        );
+  const validationMessage = ref(null);
+  const validationStatus = ref(null);
+  const geoCaptchaLoaded = ref(false);
 
-        // Verifies if the script is loaded
-        if (existingScript) {
+  const alertTitle = computed(() => {
+    switch (validationStatus.value) {
+      case "success":
+        return "Captcha validé";
+      case "warning":
+        return "Attention";
+      case "error":
+        return "Erreur GeoCaptcha";
+      default:
+        return "";
+    }
+  });
+
+  const apiBaseUrl = "http://127.0.0.1:3000/api/v1";
+
+  const infoTitle = "GeoCaptcha - Sécurisation innovante";
+
+  const introParagraphs = [
+    `Lorsque vous arrivez sur un site internet, il vous est souvent demandé si vous êtes un humain ou un robot. Pour prouver votre humanité, vous devez résoudre un captcha, souvent sous la forme de texte à déchiffrer ou de sélection d'images.`,
+
+    `L'IGN, via la Mission Architecture Réseau et Sécurité (MARS), propose une innovation : les GéoCaptcha. Ces captchas reposent sur des données géographiques, offrant une alternative ludique et respectueuse de la vie privée tout en sensibilisant à la donnée géospatiale.`,
+
+    `Grâce à cette interface, vous pouvez administrer les GéoCaptcha, consulter les statistiques d'utilisation et gérer les clés d'accès. Une solution clé en main pour renforcer la sécurité numérique et l'intégrité des données géographiques.`,
+  ];
+
+  /**
+   * Dynamically loads GeoCaptcha's script
+   */
+  function loadGeoCaptchaScript() {
+    return new Promise((resolve, reject) => {
+      const scriptUrl = `${apiBaseUrl}/lib.js`;
+
+      const existingScript = document.querySelector(
+          `script[src='${scriptUrl}']`
+      );
+
+      // The script already exists
+      if (existingScript) {
+        if (window.geoCaptcha) {
+          geoCaptchaLoaded.value = true;
+          resolve();
+          return
+        }
+
+        existingScript.addEventListener('load', () => {
           if (window.geoCaptcha) {
-            this.geoCaptchaLoaded = true;
+            geoCaptchaLoaded.value = true;
             resolve();
           } else {
             reject(
-              new Error(
-                `Le script GeoCaptcha est déjà chargé mais window.geoCaptcha est indisponible`
-              )
+                new Error(
+                    "lib.js est chargé mais window.geoCaptcha est indisponible"
+                )
             );
           }
-          return;
-        }
+        }, { once: true });
 
-        console.log(`Chargement de GeoCaptcha depuis ${scriptUrl}`);
+        existingScript.addEventListener("error", () => {
+          reject(
+              new Error(
+                  `Impossible de charger GeoCaptcha depuis ${scriptUrl}`
+              )
+          );
+        }, { once: true });
 
-        const script = document.createElement('script');
-        script.src = scriptUrl;
-
-        script.onload = () => {
-          console.log('GeoCaptcha lib.js chargé');
-          console.log('window.geoCaptcha:', window.geoCaptcha);
-          console.log('API_ENDPOINT:', window.API_ENDPOINT);
-
-          if (window.geoCaptcha) {
-            this.geoCaptchaLoaded = true;
-            resolve();
-          } else {
-            reject(new Error(
-                'lib.js est chargé mais window.geoCaptcha est indisponible'
-            ));
-          }
-        };
-
-        script.onerror = (error) => {
-          console.error('Impossible de charger:', scriptUrl);
-          console.error('Erreur:', error);
-
-          reject(new Error(
-              `Impossible de charger GeoCaptcha depuis ${scriptUrl}`
-          ));
-        };
-
-        document.head.appendChild(script);
-      });
-    },
-
-    
-    // Valide un captcha en envoyant son token à l'API
-    async validateCaptcha(token) {
-      try {
-        const response = await fetch(`${this.apiBaseUrl}/challenge/${token}/validation`, {
-          method: 'GET',
-          headers: {
-            'x-api-key': this.apiKey,
-            'x-app-id': this.appId,
-          },
-        });
-        return response.ok;
-      } catch (error) {
-        return false;
-      }
-    },
-
-    // Gère l'envoi du formulaire et lance GeoCaptcha
-    handleSubmit() {
-      this.validationMessage = null;
-
-      if (!this.geoCaptchaLoaded || !window.geoCaptcha) {
-        this.validationMessage = "Service GeoCaptcha non chargé. Veuillez réessayer.";
         return;
       }
 
-      window.geoCaptcha.launch({
-        form: document.getElementById('captcha-form'),
-        submit: async (token) => {
-          if (token) {
-            await this.validateCaptcha(token);
-          } else {
-            this.validationMessage = "Aucun token n'a été généré.";
-          }
+      const script = document.createElement("script");
+      script.src = scriptUrl;
+
+      script.addEventListener("load", () => {
+        if (window.geoCaptcha) {
+          geoCaptchaLoaded.value = true;
+          resolve();
+        } else {
+          reject(
+              new Error(
+                  "lib.js est chargé mais window.geoCaptcha est indisponible"
+              )
+          );
         }
-      });
-    },
+      }, { once: true });
 
-    // Initialise le captcha au chargement de la page
-    async initCaptcha() {
-      try {
-        await this.loadGeoCaptchaScript();
+      script.addEventListener("error", () => {
+        reject(
+            new Error(
+                `Impossible de charger GeoCaptcha depuis ${scriptUrl}`
+            )
+        );
+      }, { once: true });
 
-        console.log('GeoCaptcha prêt:', window.geoCaptcha);
-        console.log('geoCaptchaLoaded:', this.geoCaptchaLoaded);
-      } catch (error) {
-        console.error('Erreur GeoCaptcha:', error);
-
-        this.validationMessage =
-            `Le service GeoCaptcha est momentanément indisponible. Veuillez réessayer ultérieurement.`
-      }
-    },
-
-    toggleApiKeyLock() {
-
-      // Si aucune clé saisie => on ne verrouille pas
-      if (!this.apiKeyLocked && !this.apiKey.trim()) {
-        this.validationMessage = 'Veuillez saisir une API Key';
-        return;
-      }
-      this.apiKeyLocked = !this.apiKeyLocked;
-    }
-  },
-
-  mounted() {
-    window.vm = this;
-    console.log("Mounted");
-    window.scrollTo(0, 0);
-    this.initCaptcha();
+      document.head.appendChild(script);
+    });
   }
-};
+
+  /**
+   * Validate a captcha by sending its token to the API
+   */
+  async function validateCaptcha(token) {
+    try {
+      const response = await fetch(
+      `${apiBaseUrl}/challenge/${token}/validation`,
+        {
+          method: "GET",
+          headers: {
+            "x-api-key": props.apiKey,
+            "x-app-id": props.appId,
+          },
+        }
+      )
+
+      return response.ok;
+    } catch (err) {
+      console.error("Erreur lors de la validation du captcha:", err);
+      return false;
+    }
+  }
+  /** Manages form submission and launches GeoCaptcha */
+  function handleSubmit() {
+    validationMessage.value = null;
+    validationStatus.value = null;
+
+    if (!geoCaptchaLoaded.value || !window.geoCaptcha) {
+      validationStatus.value ="error";
+      validationMessage.value = "Service GeoCaptcha non chargé. Veuillez réessayer.";
+      return
+    }
+
+    window.geoCaptcha.launch({
+      form: document.getElementById('captcha-form'),
+
+      submit: async (token) => {
+        if (token) {
+          const isValid = await validateCaptcha(token)
+
+          validationStatus.value = isValid ? "success" : "error";
+          validationMessage.value = isValid
+            ? "Captcha validé."
+            : "Le captcha n'est pas valide."
+        } else {
+          validationStatus.value = "warning";
+          validationMessage.value = "Aucun token n'a été généré.";
+        }
+      },
+    });
+  }
+
+  /** Initializes the captcha on page mounting. */
+  async function initCaptcha() {
+    try {
+      await loadGeoCaptchaScript();
+
+      console.log("GeoCaptcha prêt:", window.geoCaptcha);
+      console.log("geoCaptchaLoaded:", geoCaptchaLoaded.value);
+    } catch (error) {
+      console.error("Erreur GeoCaptcha:", error);
+
+      validationStatus.value = "error";
+      validationMessage.value =
+          "Le service GeoCaptcha est momentanément indisponible. Veuillez réessayer ultérieurement.";
+    }
+  }
+
+  onMounted(() => {
+    console.log("Mounted");
+
+    window.scrollTo(0, 0);
+
+    initCaptcha();
+  })
 </script>
 
 <template>
@@ -184,8 +210,8 @@ export default {
         <!-- Error message displayed on Captcha load failure -->
         <DsfrAlert
           v-if="validationMessage"
-          type="error"
-          title="GeoCaptcha indisponible"
+          :type="validationStatus"
+          :title="alertTitle"
           :description="validationMessage"
         />
 
@@ -196,7 +222,7 @@ export default {
         >
           <!-- Bouton pour tester un GeoCaptcha -->
           <DsfrButton
-            label="Tester un Geocaptcha"
+            label="Tester un GeoCaptcha"
             icon="fr-icon-survey-line"
             type="submit"
           />
@@ -209,11 +235,6 @@ export default {
         </a>
       </div>
     </section>
-
-    <!-- Message d'erreur si le chargement échoue -->
-<!--    <div v-if="loadingError" class="error-message">-->
-<!--      {{ loadingError }}-->
-<!--    </div>-->
   </div>
 </template>
 
