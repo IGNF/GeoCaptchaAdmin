@@ -1,25 +1,7 @@
-<script>
+<script setup>
+  import { computed, onMounted, reactive, ref, watch } from "vue";
 
-import {
-  DsfrTabs,
-  DsfrTabItem,
-  DsfrTabContent,
-  DsfrTag,
-  DsfrTooltip,
-  DsfrSearchBar,
-  DsfrDataTable,
-  DsfrButton,
-  DsfrButtonGroup,
-  DsfrAlert,
-  DsfrModal,
-  DsfrInput,
-  DsfrInputGroup,
-  DsfrSelect,
-} from "@gouvminint/vue-dsfr";
-
-export default {
-
-  components: {
+  import {
     DsfrTabs,
     DsfrTabItem,
     DsfrTabContent,
@@ -31,535 +13,633 @@ export default {
     DsfrButtonGroup,
     DsfrAlert,
     DsfrModal,
-    DsfrInput,
     DsfrInputGroup,
     DsfrSelect,
-  },
+  } from "@gouvminint/vue-dsfr";
 
-  data() {
-    return {
-      activeTab: 0,
-      keyName: "",
-      email: "",
-      referer: "",
-      isValidReferer: true,
-      isValidEmail: true,
-      isValidKeyname: true,
-      role: "",
-      apiKeys: [],
-      searchQuery: "",
-      showModal: false,
-      keyToDelete: null,
-      showConfirmationModal: false,
-      showMissingInfoModal: false,
-      firstObject: 1,
-      nbObjects: 20,
-      totalKeys: 0,
-      itemsPerPage: 6,
-      selectedTag: "",
-      showEditModal: false,
-      editedUser: {
-        appId: "",
-        email: "",
-        referer: "",
-        role: ""
-      },
-      userTableColumns: [
-        {
-          key: "appId",
-          label: "Nom",
-          isHeader: true,
-        },
-        {
-          key: "role",
-          label: "Rôle",
-        },
-        {
-          key: "email",
-          label: "Adresse mail",
-        },
-        {
-          key: "referer",
-          label: "Referer",
-        },
-        {
-          key: "actions",
-          label: "Actions",
-        },
-      ],
-      tableCurrentPage: 0,
-    };
-  },
-  props: {
+  /*
+   * Props
+   */
+  const props = defineProps({
     apiKey: String,
     appId: String,
-  },
-  computed: {
-    // Nouvelle propriété calculée pour déterminer si le formulaire est valide
-    isFormValid() {
-      return (
-          this.keyName &&
-          this.keyName.length >= 5 &&
-          this.isValidKeyname &&
-          this.email &&
-          this.isValidEmail &&
-          this.referer &&
-          this.isValidReferer &&
-          this.role
-      );
+  });
+
+  const CUSER_API_URL = "http://127.0.0.1:3000/api/v1/admin/cuser";
+  const KEY_NAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2}|com)$/;
+  const REFERER_REGEX = /^https?:\/\/([a-zA-Z0-9-]+\.)+([a-zA-Z]{2}|com)\/?$/;
+  const ROLE_OPTIONS = [
+    { value: 'admin', text: 'Admin' },
+    { value: 'private', text: 'Private' },
+  ];
+
+  /*
+   * State
+   */
+  const activeTab = ref(0);
+
+  const keyName = ref("");
+  const email = ref("");
+  const referer = ref("");
+  const role = ref("");
+
+  const isEditedEmailValid = ref(true);
+  const isEditedRefererValid = ref(true);
+
+  const isValidReferer = ref(true);
+  const isValidEmail = ref(true);
+  const isValidKeyName = ref(true);
+
+  const apiKeys = ref([]);
+  const searchQuery = ref("");
+  const selectedTag = ref("");
+
+  const showModal = ref(false);
+  const keyToDelete = ref(null);
+
+  const showConfirmationModal = ref(false);
+  const showEditModal = ref(false);
+
+  const rowsPerPage = ref(6);
+  const tableCurrentPage = ref(0);
+
+  const editedUser = reactive({
+    appId: "",
+    email: "",
+    referer: "",
+    role: "",
+  });
+
+  const userTableColumns = [
+    {
+      key: "appId",
+      label: "Nom",
+      isHeader: true,
     },
+    {
+      key: "role",
+      label: "Rôle",
+    },
+    {
+      key: "email",
+      label: "Adresse mail",
+    },
+    {
+      key: "referer",
+      label: "Referer",
+    },
+    {
+      key: "actions",
+      label: "Actions",
+    },
+  ];
 
-    userTableRows() {
-      return this.apiKeys
-        .filter(key => {
-          const searchQueryLower = this.searchQuery.toLowerCase();
+  /*
+   * Computed
+   */
+  const isFormValid = computed(() => {
+    return Boolean(
+        keyName.value &&
+        keyName.value.length >= 5 &&
+        isValidKeyName.value &&
+        email.value &&
+        isValidEmail.value &&
+        referer.value &&
+        isValidReferer.value &&
+        role.value
+    );
+  });
 
-          const appIdMatch =
-              key.appId &&
-              key.appId.toLowerCase().includes(searchQueryLower);
+  const userTableRows = computed(() => {
+    const query = searchQuery.value.toLowerCase().trim();
+    const tag = selectedTag.value;
 
-          const emailMatch =
-              key.email &&
-              key.email.toLowerCase().includes(searchQueryLower);
+    return apiKeys.value
+      .filter((user) => {
+        const matchesSearch =
+          !query ||
+          user.email?.toLowerCase().includes(query) ||
+          user.appId?.toLowerCase().includes(query) ||
+          (Array.isArray(user.referer)
+            ? user.referer.some(value =>
+              value.toLowerCase().includes(query)
+              )
+            : user.referer?.toLowerCase().includes(query)
+          );
 
-          const refererMatch =
-              Array.isArray(key.referer) &&
-              key.referer.some(referer =>
-                  referer.toLowerCase().includes(searchQueryLower)
-              );
+        const matchesTag =
+          !tag || user.role === tag;
 
-          const matchesTag =
-              this.selectedTag === "" ||
-              key.role === this.selectedTag;
-
-          return (appIdMatch || emailMatch || refererMatch) && matchesTag;
-        })
-        .map((key) => ({
-          appId: key.appId,
-          email: key.email,
-          referer: Array.isArray(key.referer)
-              ? key.referer
-              : [key.referer],
-          role: key.role,
-          actions: key,
+        return matchesSearch && matchesTag;
+      })
+        .map((user) => ({
+          ...user,
+          referer: Array.isArray(user.referer)
+              ? user.referer
+              : user.referer
+                  ? [user.referer]
+                  : [],
         }));
-    },
-  },
-  methods: {
-    validateKeyName() {
-      // Regex pour une chaîne compacte avec uniquement des lettres, chiffres, _ et -, sans espace
-      const regex = /^[a-zA-Z0-9_-]+$/;
-      this.isValidKeyname = this.keyName.length >= 5 && regex.test(this.keyName);
-      return this.keyName && this.keyName.length >= 5 && regex.test(this.keyName);
-    },
+  });
 
-    validateEmail() {
-      // Regex pour valider que l'email se termine par .xx (exactement 2 caractères)
-      const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2}|com)$/;
-      this.isValidEmail = regex.test(this.email);
-    },
+  /*
+   * Validation
+   */
+  function validateKeyName() {
+    isValidKeyName.value =
+        keyName.value.length >= 5 &&
+        KEY_NAME_REGEX.test(keyName.value);
 
-    validateReferer() {
-      // Regex pour vérifier que le referer se termine par .xx (2 caractères) ou .com
-      const referers = this.referer
-          .split(',')
-          .map(referer => referer.trim())
-          .filter(Boolean);
+    return isValidKeyName.value;
+  }
 
-      const regex = /^(https?:\/\/)[a-zA-Z0-9-]+(\.[a-zA-Z]{2}|\.com)\/?$/;
+  function validateEmail() {
+    isValidEmail.value = EMAIL_REGEX.test(email.value);
 
-      this.isValidReferer =
-          referers.length > 0 &&
-          referers.every(referer => regex.test(referer));
-    },
+    return isValidEmail.value;
+  }
 
-    // Ouvrir le modal et définir la clé à supprimer
-    openModal(id) {
-      this.keyToDelete = id;
-      this.showModal = true;
-    },
+  function validateReferer() {
+    const referers = parseReferers(referer.value);
 
-    // Fermer le modal sans effectuer de suppression
-    closeModal() {
-      this.showModal = false;
-      this.keyToDelete = null;
-    },
+    isValidReferer.value =
+      referers.length > 0 &&
+      referers.every(value => REFERER_REGEX.test(value));
 
-    // Ouvrir le modal de confirmation pour générer une clé
-    openConfirmationModal() {
-      if (this.isFormValid) {
-        this.showConfirmationModal = true; // Affiche le modal de confirmation
-      } else {
-        this.showMissingInfoModal = true; // Affiche le modal d'erreur si les champs sont invalides
-      }
-    },
+    return isValidReferer.value;
+  }
 
-    toggleTag(role) {
-      // Si on clique sur le tag déjà actif, on le désactive
-      this.selectedTag = this.selectedTag === role ? "" : role;
-      this.tableCurrentPage = 0;
-    },
+  function validateEditedEmail() {
+    isEditedEmailValid.value = EMAIL_REGEX.test(editedUser.email);
 
-    openEditModal(user) {
-      this.editedUser = {
-        ...user,
-        referer: Array.isArray(user.referer)
-          ? user.referer.join(', ')
-          : user.referer || '',
-      };
-      this.showEditModal = true;
+    return isEditedEmailValid.value;
+  }
 
-      this.email = this.editedUser.email;
-      this.referer = this.editedUser.referer;
+  function validateEditedReferer() {
+    const referers = parseReferers(editedUser.referer);
 
-      this.validateEmail();
-      this.validateReferer();
-    },
+    isEditedRefererValid.value =
+        referers.length > 0 &&
+        referers.every((value) => REFERER_REGEX.test(value));
 
-    closeEditModal() {
-      this.showEditModal = false;
-      this.email = "";
-      this.referer = "";
-      this.editedUser = {
-        appId: "",
-        email: "",
-        referer: "",
-        role: ""
-      };
-    },
+    return isEditedRefererValid.value;
+  }
 
-    async saveChanges() {
-      this.email = this.editedUser.email;
-      this.referer = this.editedUser.referer;
-      this.validateEmail();
-      this.validateReferer();
+  /*
+   * Modal management
+   */
+  function openModal(id) {
+    keyToDelete.value = id;
+    showModal.value = true;
+  }
 
-      // Ne soumettre que si les validations passent
-      if (!this.isValidEmail || !this.isValidReferer) {
-        return;
-      }
+  function closeModal() {
+    showModal.value = false;
+    keyToDelete.value = null;
+  }
 
-      const referers = this.editedUser.referer
-        .split(',')
-        .map(referer => referer.trim())
-        .filter(Boolean);
+  function openConfirmationModal() {
+    if (isFormValid.value) {
+      showConfirmationModal.value = true;
+    }
+  }
 
-      const updatedUser = {
-        ...this.editedUser,
-        referer: referers,
-      }
+  function toggleTag(tagRole) {
+    selectedTag.value =
+      selectedTag.value === tagRole ? "" : tagRole;
 
-      try {
-        const oldEmail = this.apiKeys.find(key => key.appId === updatedUser.appId).email;
+    tableCurrentPage.value = 0;
+  }
 
-        const response = await fetch(
-            `http://127.0.0.1:3000/api/v1/admin/cuser/${encodeURIComponent(updatedUser.appId)}`,
-          {
+  /*
+   * Edit user
+   */
+  function openEditModal(user) {
+    editedUser.appId = user.appId;
+    editedUser.email = user.email;
+    editedUser.referer = Array.isArray(user.referer)
+      ? user.referer.join(", ")
+      : user.referer || "";
+    editedUser.role = user.role;
+
+    validateEditedEmail();
+    validateEditedReferer();
+
+    showEditModal.value = true;
+  }
+
+  function closeEditModal() {
+    showEditModal.value = false;
+
+    editedUser.appId = "";
+    editedUser.email = "";
+    editedUser.referer = "";
+    editedUser.role = "";
+
+    isEditedEmailValid.value = true;
+    isEditedRefererValid.value = true;
+  }
+
+  function openMail(to, subject, lines) {
+    const recipients = [...new Set([to].flat().filter(Boolean))].join(",");
+    if (!recipients) return;
+
+    window.location.href =
+        `mailto:${recipients}` +
+        `?subject=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(lines.join("\n"))}`;
+  }
+
+  async function saveChanges() {
+    validateEditedEmail();
+    validateEditedReferer();
+
+    if (!isEditedEmailValid.value || !isEditedRefererValid.value) {
+      return;
+    }
+
+    const updatedUser = {
+      ...editedUser,
+      referer: parseReferers(editedUser.referer),
+    };
+
+    try {
+      const existingUser = apiKeys.value.find(
+          (key) => key.appId === updatedUser.appId
+      );
+
+      const oldEmail = existingUser?.email;
+
+      const response = await fetch(
+        `${CUSER_API_URL}/${encodeURIComponent(
+            updatedUser.appId
+        )}`,
+        {
           method: "PUT",
           headers: {
+            ...getCuserHeaders(),
             "Content-Type": "application/json",
-            "x-api-key": this.apiKey,
-            "x-app-id": this.appId
           },
           body: JSON.stringify({
             email: updatedUser.email,
             referer: updatedUser.referer,
-            role: updatedUser.role
-          })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
+            role: updatedUser.role,
+          }),
         }
+      );
 
-        const subjectNew = encodeURIComponent("Modification de votre profil utilisateur");
-        const bodyNew = encodeURIComponent(`Bonjour,
+      if (!response.ok) {
+        const errorText = await response.text();
 
-Nous avons procédé à une modification de votre profil utilisateur. Voici vos nouvelles informations :
-
-Nom : ${updatedUser.appId}
-Adresse mail : ${updatedUser.email}
-Referer : ${updatedUser.referer}
-Rôle : ${updatedUser.role}
-
-Votre clé d'accès reste inchangée.
-
-Si vous n'êtes pas à l'origine de cette action ou si vous avez des questions, veuillez nous contacter.
-
-Cordialement,
-Votre service CaptchAdmin`);
-
-        window.location.href = `mailto:${oldEmail},${updatedUser.email}?subject=${subjectNew}&body=${bodyNew}`;
-
-        // auditService.logUpdate('/key-access', `Modification du profil de l'utilisateur: ${this.editedUser.appId}`);
-        await this.fetchKeys();
-        this.closeEditModal();
-      } catch (error) {
-        console.error("Erreur:", error);
-        //auditService.logError('/key-access', `Échec lors de la modification du profil de l'utilisateur: ${this.editedUser.appId}`);
-      }
-    },
-
-    // Méthode pour générer une nouvelle clé d'accès
-    async generateApiKey() {
-      try {
-        const referers = this.referer
-          .split(',')
-          .map(referer => referer.trim())
-          .filter(Boolean);
-
-        const response = await fetch("http://127.0.0.1:3000/api/v1/admin/cuser", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": this.apiKey,
-            "x-app-id": this.appId
-          },
-          body: JSON.stringify({
-            appId: this.keyName,
-            email: this.email,
-            referer: referers,
-            role: this.role
-          })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erreur HTTP : ${response.status} - ${errorText}`);
-        }
-
-        const responseData = await response.json();
-
-        // Log détaillé de la réponse
-        console.log('Réponse complète :', responseData);
-
-        // Extraction de la clé depuis l'objet cuser
-        const generatedApiKey = responseData.cuser?.key ||
-            responseData.cuser?.apiKey ||
-            responseData.cuser?.access_key;
-
-        if (!generatedApiKey) {
-          console.error('Aucune clé trouvée dans cuser', responseData.cuser);
-          throw new Error('Impossible de trouver la clé API dans la réponse');
-        }
-
-        const subject = encodeURIComponent("Votre nouvelle clé d'accès");
-        const body = encodeURIComponent(`Bonjour,
-
-Voici votre nouvelle clé d'accès :
-
-Nom : ${this.keyName}
-Clé : ${generatedApiKey}
-
-Veuillez la conserver de manière sécurisée.
-
-Cordialement,
-Votre service CaptchAdmin`);
-
-        window.location.href = `mailto:${this.email}?subject=${subject}&body=${body}`;
-
-        // auditService.logCreate('/key-access', `Création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
-
-        await this.fetchKeys();
-
-        // Réinitialisation des champs
-        this.keyName = "";
-        this.email = "";
-        this.referer = "";
-        this.role = "";
-        this.showConfirmationModal = false;
-
-      } catch (error) {
-        console.error("Erreur lors de la génération de la clé", error);
-        this.errorMessage = error.message || "Une erreur est survenue lors de la génération de la clé.";
-        // auditService.logCreate('/key-access', `Échec lors de la création de la clé d'accès pour l'utilisateur: ${this.keyName}`);
-      }
-    },
-
-    // Méthode pour supprimer la clé d'accès après confirmation
-    async deleteKey() {
-      const id = this.keyToDelete;
-      if (!id) return;
-
-      try {
-        // Trouver l'email de l'utilisateur avant de supprimer la clé
-        const userToDelete = this.apiKeys.find(key => key.appId === id);
-        const userEmail = userToDelete?.email;
-        const userName = userToDelete?.appId;
-
-        const response = await fetch(`http://127.0.0.1:3000/api/v1/admin/cuser/${id}`,
-            { method: "DELETE",
-              headers: {
-                "Accept": "*/*",
-                "x-api-key": this.apiKey,
-                "x-app-id": this.appId
-              }});
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression de la clé.");
-        }
-
-        // Si l'email existe, envoyer une notification
-        if (userEmail) {
-          const subject = encodeURIComponent("Suppression de votre clé d'accès");
-          const body = encodeURIComponent(`Bonjour,
-
-Nous vous informons que votre clé d'accès "${userName}" a été supprimée.
-
-Si vous n'êtes pas à l'origine de cette action ou si vous avez des questions, veuillez nous contacter.
-
-Cordialement,
-Votre service CaptchAdmin`);
-
-          window.location.href = `mailto:${userEmail}?subject=${subject}&body=${body}`;
-        }
-
-        // auditService.logDelete('/key-access', `Suppression de la clé d'accès pour l'utilisateur: ${userName}`);
-
-        await this.fetchKeys();
-        this.closeModal();
-      } catch (error) {
-        console.error("Erreur:", error);
-        // auditService.logError('/key-access', `Échec lors de la suppression de la clé d'accès pour l'utilisateur: ${this.keyToDelete}`);
-      }
-    },
-
-    async fetchMoreKeys() {
-      try {
-        const response = await fetch(
-            `http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=21&nbObjects=20`,
-            {
-              method: "GET",
-              headers: {
-                "Accept": "application/json",
-                "x-api-key": this.apiKey,
-                "x-app-id": this.appId
-              },
-            }
+        throw new Error(
+          `Erreur HTTP : ${response.status} - ${errorText}`
         );
-        const resultat = await response.json();
-        const additionalKeys = JSON.parse(JSON.stringify(resultat.cusers)) || [];
-
-        this.apiKeys = [...this.apiKeys, ...additionalKeys];
-        this.totalKeys = this.apiKeys.length;
-      } catch (error) {
-        console.error("Erreur lors de la récupération des clés supplémentaires", error);
       }
-    },
 
-    async fetchKeys() {
-      try {
-        console.log("=== fetchKeys DEBUG ===");
-        console.log("apiKey exists:", !!this.apiKey);
-        console.log("apiKey length:", this.apiKey?.length);
-        console.log("appId:", this.appId);
+      openMail(
+        [oldEmail, updatedUser.email],
+        "Modification de votre profil utilisateur",
+      [
+          "Bonjour,",
+          "",
+          "Nous avons procédé à une modification de votre profil utilisateur. Voici vos nouvelles informations :",
+          "",
+          `Nom : ${updatedUser.appId}`,
+          `Adresse mail : ${updatedUser.email}`,
+          `Referer : ${updatedUser.referer.join(", ")}`,
+          `Rôle : ${updatedUser.role}`,
+          "",
+          "Votre clé d'accès reste inchangée.",
+          "",
+          "Si vous n'êtes pas à l'origine de cette action ou si vous avez des questions, veuillez nous contacter.",
+          "",
+          "Cordialement,",
+          "Votre service CaptchAdmin",
+        ],
+      );
 
-        if (!this.apiKey) {
-          throw new Error("apiKey est undefined ou vide");
-        }
-
-        if (!this.appId) {
-          throw new Error("appId est undefined ou vide");
-        }
-
-        const url =
-            "http://127.0.0.1:3000/api/v1/admin/cuser?firstObject=1&nbObjects=100";
-
-        console.log("GET URL:", url);
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Accept": "application/json",
-            "x-api-key": this.apiKey,
-            "x-app-id": this.appId
-          },
-        });
-
-        console.log("HTTP status:", response.status);
-        console.log("HTTP statusText:", response.statusText);
-
-        const rawBody = await response.text();
-
-        console.log("Raw response body:", rawBody);
-
-        if (!response.ok) {
-          throw new Error(
-              `HTTP ${response.status} ${response.statusText} - ${rawBody}`
-          );
-        }
-
-        let resultat;
-
-        try {
-          resultat = JSON.parse(rawBody);
-        } catch (parseError) {
-          console.error("Réponse non JSON:", rawBody);
-          throw parseError;
-        }
-
-        console.log("Parsed response:", resultat);
-
-        this.apiKeys = resultat.cusers || [];
-        this.totalKeys = this.apiKeys.length;
-
-      } catch (error) {
-        console.error("Erreur lors de la récupération des clés:", error);
-      }
-    },
-  },
-
-  mounted() {
-    window.scrollTo(0, 0);
-
-    if (this.apiKey) {
-      this.fetchKeys();
-    } else {
-      console.log("KeyAccess mounted: waiting for API key...");
-    }
-  },
-
-  watch: {
-    activeTab(newTab, oldTab) {
-      if (newTab !== oldTab) {
-        this.fetchKeys();
-      }
-    },
-
-    // Remettre à la première page quand la requête de recherche change
-    searchQuery() {
-      this.tableCurrentPage= 0;
-    },
-    // Valider l'email à chaque changement
-    email() {
-      this.validateEmail();
-    },
-    // Valider le referer à chaque changement
-    referer() {
-      this.validateReferer();
-    },
-
-    "editedUser.email"() {
-      this.email = this.editedUser.email;
-      this.validateEmail();
-    },
-
-    "editedUser.referer"() {
-      this.referer = this.editedUser.referer;
-      this.validateReferer();
-    },
-
-    apiKey(newApiKey) {
-      if (newApiKey) {
-        console.log("API key received by KeyAccess");
-        console.log("API key length:", newApiKey.length);
-
-        this.fetchKeys();
-      }
+      await fetchKeys();
+      closeEditModal();
+    } catch (error) {
+      console.error("Erreur:", error);
     }
   }
-};
+
+  /*
+   * Generate API key
+   */
+  async function generateApiKey() {
+    try {
+      const referers = parseReferers(referer.value);
+
+      const response = await fetch(
+        CUSER_API_URL,
+        {
+          method: "POST",
+          headers: {
+            ...getCuserHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            appId: keyName.value,
+            email: email.value,
+            referer: referers,
+            role: role.value,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        throw new Error(
+          `Erreur HTTP : ${response.status} - ${errorText}`
+        );
+      }
+
+      const responseData = await response.json();
+      const generatedApiKey =
+        responseData.cuser?.key ||
+        responseData.cuser?.apiKey ||
+        responseData.cuser?.access_key;
+
+      if (!generatedApiKey) {
+        console.error(
+          "Aucune clé trouvée dans cuser",
+          responseData.cuser
+        );
+
+        throw new Error(
+          "Impossible de trouver la clé API dans la réponse."
+        );
+      }
+
+      openMail(
+        email.value,
+        "Votre nouvelle clé d'accès",
+        [
+          "Bonjour,",
+          "",
+          "Voici votre nouvelle clé d'accès :",
+          "",
+          `Nom : ${keyName.value}`,
+          `Clé : ${generatedApiKey}`,
+          "",
+          "Veuillez la conserver de manière sécurisée.",
+          "",
+          "Cordialement,",
+          "Votre service CaptchAdmin",
+        ],
+      );
+
+      await fetchKeys();
+
+      keyName.value = "";
+      email.value = "";
+      referer.value = "";
+      role.value = "";
+
+      showConfirmationModal.value = false;
+    } catch (error) {
+      console.error(
+          "Erreur lors de la génération de la clé",
+          error
+      );
+    }
+  }
+
+  /*
+   * Delete API key
+   */
+  async function deleteKey() {
+    const id = keyToDelete.value;
+
+    if (!id) {
+      return;
+    }
+
+    try {
+      const userToDelete = apiKeys.value.find(
+          (key) => key.appId === id
+      );
+
+      const userEmail = userToDelete?.email;
+      const userName = userToDelete?.appId;
+
+      const response = await fetch(
+        `${CUSER_API_URL}/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            ...getCuserHeaders(),
+            Accept: "*/*",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        throw new Error(
+            `Erreur HTTP : ${response.status} - ${errorText}`
+        );
+      }
+
+      if (userEmail) {
+        openMail(
+          userEmail,
+          "Suppression de votre clé d'accès",
+          [
+            "Bonjour,",
+            "",
+            `Nous vous informons que votre clé d'accès "${userName}" a été supprimée.`,
+            "",
+            "Si vous n'êtes pas à l'origine de cette action ou si vous avez des questions, veuillez nous contacter.",
+            "",
+            "Cordialement,",
+            "Votre service CaptchAdmin",
+          ]
+        );
+      }
+
+      await fetchKeys();
+      closeModal();
+    } catch (error) {
+      console.error("Erreur:", error);
+    }
+  }
+
+  /*
+   * Fetch additional keys
+   * Todo: Rehabilitate later for large dataset api compatibility
+   */
+  // async function fetchMoreKeys() {
+  //   try {
+  //     const response = await fetch(
+  //       `${CUSER_API_URL}?firstObject=21&nbObjects=20`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           ...getCuserHeaders(),
+  //           Accept: "application/json",
+  //         },
+  //       }
+  //     );
+  //
+  //     const result = await response.json();
+  //
+  //     const additionalKeys =
+  //         JSON.parse(JSON.stringify(result.cusers)) || [];
+  //
+  //     apiKeys.value = [
+  //       ...apiKeys.value,
+  //       ...additionalKeys,
+  //     ];
+  //
+  //     totalKeys.value = apiKeys.value.length;
+  //   } catch (error) {
+  //     console.error(
+  //         "Erreur lors de la récupération des clés supplémentaires",
+  //         error
+  //     );
+  //   }
+  // }
+
+  /*
+   * Fetch keys
+   */
+  async function fetchKeys() {
+    try {
+      if (!props.apiKey) {
+        throw new Error("apiKey est undefined ou vide");
+      }
+
+      if (!props.appId) {
+        throw new Error("appId est undefined ou vide");
+      }
+
+      const url =
+          `${CUSER_API_URL}?firstObject=1&nbObjects=100`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          ...getCuserHeaders(),
+          Accept: "application/json",
+        },
+      });
+
+      const rawBody = await response.text();
+
+      if (!response.ok) {
+        throw new Error(
+          `HTTP ${response.status} ${response.statusText} - ${rawBody}`
+        );
+      }
+
+      let result;
+
+      try {
+        result = JSON.parse(rawBody);
+      } catch (parseError) {
+        console.error("Réponse non JSON:", rawBody);
+        throw parseError;
+      }
+
+      apiKeys.value = result.cusers || [];
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des clés:",
+        error
+      );
+      apiKeys.value = [];
+    }
+  }
+
+  /*
+   * Helpers
+   */
+  function parseReferers(value) {
+    return value
+      .split(",")
+      .map(referer => referer.trim())
+      .filter(Boolean);
+  }
+
+  const getCuserHeaders  = () => ({
+    "x-api-key": props.apiKey,
+    "x-app-id": props.appId,
+  });
+
+  /*
+   * Lifecycle
+   */
+  onMounted(() => {
+    window.scrollTo(0, 0);
+
+    if (props.apiKey) {
+      fetchKeys();
+    }
+  });
+
+  /*
+   * Watchers
+   */
+  watch(activeTab, (newTab) => {
+    if (newTab === 0) {
+      fetchKeys();
+    }
+  });
+
+  watch(searchQuery, () => {
+    tableCurrentPage.value = 0;
+  });
+
+  watch(keyName, () => {
+    validateKeyName();
+  });
+
+  watch(email, () => {
+    validateEmail();
+  });
+
+  watch(referer, () => {
+    validateReferer();
+  });
+
+  watch(
+    () => editedUser.email,
+    () => {
+      validateEditedEmail();
+    }
+  );
+
+  watch(
+    () => editedUser.referer,
+    () => {
+      validateEditedReferer();
+    }
+  );
+
+  watch(
+      () => [props.apiKey, props.appId],
+      ([apiKey, appId]) => {
+        if (apiKey && appId) {
+          fetchKeys();
+        }
+      }
+  );
+
+  watch(
+    [() => userTableRows.value.length, rowsPerPage],
+    ([length, perPage]) => {
+      const lastPage = Math.max(0, Math.ceil(length / perPage) - 1);
+      if (tableCurrentPage.value > lastPage) {
+        tableCurrentPage.value = lastPage;
+      }
+    }
+  );
 </script>
 
 <template>
@@ -595,15 +675,15 @@ Votre service CaptchAdmin`);
       >
         <div class="key-list">
           <DsfrDataTable
+            v-if="apiKeys.length > 0"
             title="Liste des utilisateurs"
             :columns="userTableColumns"
             :rows="userTableRows"
             pagination
             v-model:current-page="tableCurrentPage"
-            :rows-per-page="itemsPerPage"
+            v-model:rows-per-page="rowsPerPage"
             :pagination-options="[2, 6, 12, 24]"
             size="sm"
-            v-if="userTableRows.length > 0"
           >
             <template #tableTopBarSearch>
               <div class="search-container">
@@ -644,7 +724,20 @@ Votre service CaptchAdmin`);
               </div>
             </template>
 
-            <template #cell="{ colKey, cell }">
+            <template v-if="userTableRows.length === 0" #tbody>
+              <tr>
+                <td :colspan="userTableColumns.length">
+                  <DsfrAlert
+                      type="warning"
+                      title="Aucun résultat pour cette recherche."
+                  />
+                </td>
+              </tr>
+            </template>
+
+            <template
+              #cell="{ colKey, cell }"
+            >
               <template v-if="colKey === 'actions'">
                 <DsfrButtonGroup
                   inline-layout-when="always"
@@ -685,11 +778,10 @@ Votre service CaptchAdmin`);
 
           <!-- Message si la liste des clés est vide -->
           <DsfrAlert
-            v-if="userTableRows.length === 0"
-            type="error"
-            title="Aucune clé d'accès trouvée."
+              v-if="apiKeys.length === 0"
+              type="error"
+              title="Aucune clé d'accès trouvée."
           />
-
         </div>
 
         <!-- Modal de modification -->
@@ -705,7 +797,8 @@ Votre service CaptchAdmin`);
             <DsfrInputGroup
               v-model="editedUser.appId"
               label="Nom :"
-              hint="Le nom d'utilisateur ne peut pas être modfifié"
+              :label-visible="true"
+              hint="Le nom d'utilisateur ne peut pas être modifié"
               type="text"
               disabled
               readonly
@@ -714,11 +807,12 @@ Votre service CaptchAdmin`);
             <DsfrInputGroup
               v-model="editedUser.email"
               label="Adresse mail associée :"
+              :label-visible="true"
               type="email"
               placeholder="exemple@xyz.fr"
               required
               :error-message="
-                editedUser.email && !isValidEmail
+                editedUser.email && !isEditedEmailValid
                   ? 'L\'adresse email doit se terminer par un domaine à exactement 2 caractères ' +
                     '(ex: .fr, .uk, .de) ou par .com, et être de la forme exemple@xyz.fr'
                   : undefined
@@ -728,11 +822,12 @@ Votre service CaptchAdmin`);
             <DsfrInputGroup
               v-model="editedUser.referer"
               label="Referer :"
+              :label-visible="true"
               type="text"
               placeholder="Exemple : http(s)://application-client1.fr, http(s)://application-client2.fr"
               required
               :error-message="
-                editedUser.referer && !isValidReferer
+                editedUser.referer && !isEditedRefererValid
                   ? 'L’URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, ' +
                   '.de) ou par .com, et être de la forme http(s)://application-client1.fr'
                   : undefined
@@ -744,11 +839,8 @@ Votre service CaptchAdmin`);
               select-id="edit-select"
               name="edit-select"
               label="Rôle :"
-              :options="[
-                  { value: 'admin', text: 'Admin' },
-                  { value: 'private', text: 'Private' },
-              ]"
-              default-unselected-text="Choissez un rôle"
+              :options="ROLE_OPTIONS"
+              default-unselected-text="Choisissez un rôle"
               required
             />
           </form>
@@ -761,7 +853,7 @@ Votre service CaptchAdmin`);
             >
               <DsfrButton
                 label="Enregistrer les modifications"
-                :disabled="!isValidEmail || !isValidReferer || !editedUser.role"
+                :disabled="!isEditedEmailValid || !isEditedRefererValid || !editedUser.role"
                 @click="saveChanges"
               />
 
@@ -820,23 +912,24 @@ Votre service CaptchAdmin`);
               <DsfrInputGroup
                 v-model="keyName"
                 label="Nom :"
-                placeholder="Nom associé à la clé d'accès (minimum 5 caratères)"
-                hint="Minimum 5 caractères, sans espace et sans symboles autres que « - » et « _ »."
+                :label-visible="true"
+                placeholder="Nom associé à la clé d'accès (minimum 5 caractères)"
+                hint="Minimum 5 caractères, sans espace et sans symbole autres que « - » et « _ »."
                 minlength="5"
                 required
                 type="text"
                 :error-message="
-                  keyName && !isValidKeyname
-                    ? 'Le nom doit comprendre au minimum 5 caractères, sans espace, et sans symboles autre que « - » et « _ ».'
+                  keyName && !isValidKeyName
+                    ? 'Le nom doit comprendre au minimum 5 caractères, sans espace, et sans symbole autre que « - » et « _ ».'
                     : undefined
                 "
-                @input="validateKeyName"
               />
 
               <DsfrInputGroup
                 v-model="email"
                 input-group-id="email"
                 label="Adresse mail associée :"
+                :label-visible="true"
                 placeholder="exemple@xyz.fr"
                 required
                 type="email"
@@ -851,6 +944,7 @@ Votre service CaptchAdmin`);
                 v-model="referer"
                 input-group-id="key-referer"
                 label="Referer :"
+                :label-visible="true"
                 placeholder="Exemple : http(s)://application-client1.fr, http(s)://application-client2.fr"
                 required
                 type="text"
@@ -859,7 +953,6 @@ Votre service CaptchAdmin`);
                     ? 'L’URL doit se terminer par un domaine à exactement 2 caractères (ex: .fr, .uk, .de) ou par .com, et être de la forme http(s)://application-client1.fr'
                     : undefined
                 "
-                @input="validateReferer"
               />
 
 
@@ -868,10 +961,7 @@ Votre service CaptchAdmin`);
                   select-id="select"
                   label="Rôle :"
                   name="select"
-                  :options="[
-                    { value: 'admin', text: 'Admin' },
-                    { value: 'private', text: 'Private' },
-                ]"
+                  :options="ROLE_OPTIONS"
                   default-unselected-text="Choisissez un rôle"
                   required
               />
@@ -934,10 +1024,6 @@ Votre service CaptchAdmin`);
 /* Styles pour la recherche d'utilisateur */
 .key-list {
 margin: 1em;
-}
-
-.key-generation {
-padding: 1em;
 }
 
 .search-container {
