@@ -35,16 +35,27 @@
 </template>
 
 <style scoped>
+  .map-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
   .map {
     width: 100%;
     height: 300px;
-    margin-top: 40px;
+    z-index: 100;
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
-  .map:fullscreen, .map:-webkit-full-screen {
-    height: 100vh;
+
+  .map:-webkit-full-screen {
+    height: 100%;
     margin: 0;
+  }
+
+  .map:fullscreen {
+    height: 100%;
   }
 </style>
