@@ -616,6 +616,7 @@ export default {
                         <li>
                           <DsfrButton
                               label="Accepter"
+                              type="button"
                               icon="ri-checkbox-circle-line"
                               @click="handleConserver"
                           />
@@ -624,6 +625,7 @@ export default {
                         <li>
                           <DsfrButton
                               label="Refuser"
+                              type="button"
                               secondary
                               icon="ri-close-circle-line"
                               @click="closeModal"
