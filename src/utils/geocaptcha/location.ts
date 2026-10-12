@@ -12,7 +12,7 @@ export interface GeoCaptchaLocation {
     /** Postal code associated with the location */
     zipcode: string;
     /** INSEE department code */
-    departementCode: string;
+    departmentCode: string;
     /** Commune name */
     communeName: string;
 }

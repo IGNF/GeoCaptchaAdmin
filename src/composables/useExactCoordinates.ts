@@ -103,22 +103,22 @@ export function useExtraCoordinateMode() {
     });
 
     /**
-     * Placeholder displaying the valid latitude range of the selected department when its geometry
+     * Placeholder displaying the indicative latitude range of the department's bounding box when its geometry
      * has been loaded.
      */
     const latitudePlaceholder = computed(() =>
         bbox.value
-            ? `Entrez une latitude entre ${fmt(bbox.value[1])} et ${fmt(bbox.value[3])}`
+            ? `Plage indicative : ${fmt(bbox.value[1])} à ${fmt(bbox.value[3])}`
             : 'Entrez une latitude'
     );
 
     /**
-     * Placeholder displaying the valid longitude range of the selected department when its geometry
+     * Placeholder displaying the indicative longitude range of the department's bounding box when its geometry
      * has been loaded.
      */
     const longitudePlaceholder = computed(() =>
         bbox.value
-            ? `Entrez une longitude entre ${fmt(bbox.value[0])} et ${fmt(bbox.value[2])}`
+            ? `Plage indicative : ${fmt(bbox.value[0])} à ${fmt(bbox.value[2])}`
             : 'Entrez une longitude',
     );
 
