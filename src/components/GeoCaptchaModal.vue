@@ -43,7 +43,7 @@
   watch(
     () => props.opened,
     (isOpen) => {
-      if (!isOpen && props.location && props.mode) {
+      if (isOpen && props.location && props.mode) {
         open(props.location, props.mode);
       } else if (!isOpen) {
         close()
@@ -61,7 +61,7 @@
     }
   }
 
-  /** Reports the refusal and loses the modal. Ignored while a save is in progress. */
+  /** Reports the refusal and closes the modal. Ignored while a save is in progress. */
   function onRefuse() {
     if (saving.value) return;
     emit('refused');

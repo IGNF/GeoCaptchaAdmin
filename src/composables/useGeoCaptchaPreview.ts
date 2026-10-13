@@ -9,7 +9,7 @@ import type { GeoCaptchaLocation } from '@/utils/geocaptcha/location'
 import type { GeoCaptchaMode } from '@/utils/geocaptcha/modes'
 
 /**
- * Manages the lifecycle of a GeoCaptcha preview: prepare it, saving it and cleaning up.
+ * Manages the lifecycle of a GeoCaptcha preview: preparing it, saving it and cleaning up.
  *
  * - `open` computes the tile, creates a single id and loads the images.
  * - `save` persists the GeoCaptcha with that same id.

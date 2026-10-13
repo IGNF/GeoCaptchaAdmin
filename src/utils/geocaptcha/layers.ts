@@ -1,4 +1,4 @@
-import type { GeCaptchaMode } from './modes';
+import type { GeoCaptchaMode } from './modes';
 
 /** Imagery leyers a tile can be requested from. */
 export type TileLayerName = 'ortho' | 'scan' | 'plan'
@@ -12,5 +12,5 @@ export const BACKGROUND_LAYER: TileLayerName = 'plan'
  * @param mode - The selected imagery mode.
  * @returns The layer to request. `'plan-sur-plan'` uses the `'plan'` layer.
  */
-export const foregroundLayerFor = (mode: GeCaptchaMode): TileLayerName =>
+export const foregroundLayerFor = (mode: GeoCaptchaMode): TileLayerName =>
     mode === 'plan-sur-plan' ? 'plan' : mode;

@@ -3,7 +3,7 @@ import {
     authHeaders,
     type ApiCredentials
 } from "@/services/api-config";
-import { Tile } from "@/utils/geo/tile";
+import type { Tile } from "@/utils/geo/tile";
 import type { GeoCaptchaMode } from '@/utils/geocaptcha/modes';
 
 /** Body of the request that creates (or updates) a GeoCaptcha. */
@@ -25,9 +25,9 @@ export interface KingpinPayload extends Tile {
 export async function saveKingpin(
     payload: KingpinPayload,
     credentials: ApiCredentials,
-): Promise<{ mas: string }> {
+): Promise<{ msg: string }> {
     const response = await fetch(
-        `${API_URL}/api/v1/admin/kingpin`,
+        `${API_URL}/admin/kingpin`,
         {
             method: 'POST',
             headers: {
@@ -38,6 +38,16 @@ export async function saveKingpin(
             body: JSON.stringify(payload),
         }
     );
-    if (!response.ok) throw new Error(`Kingpin creation failed (HTTP ${response.status})`);
-    return response.json();
+    if (!response.ok) {
+        const detail = await response.text().catch(() => '');
+        throw new Error(`Kingpin creation failed (HTTP ${response.status}) ${detail}`);
+    }
+
+    const body = await response.json();
+
+    if (typeof body?.msg !== 'string') {
+        throw new Error('Unexpected response from the kingpin endpoint');
+    }
+
+    return body;
 }

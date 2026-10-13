@@ -1,6 +1,6 @@
 import { onBeforeUnmount, ref } from "vue";
 import type { TileFetcher } from "@/services/tile-source";
-import { Tile } from "@/utils/geo/tile";
+import type { Tile } from "@/utils/geo/tile";
 import { BACKGROUND_LAYER, foregroundLayerFor } from "@/utils/geocaptcha/layers";
 import type { GeoCaptchaMode } from '@/utils/geocaptcha/modes'
 
@@ -22,7 +22,7 @@ export function useGeoCaptchaImages(fetcher: TileFetcher) {
     const loading = ref(false);
     const error = ref('');
 
-    // Incremented on every load/reset tot discard responses from a superseded load
+    // Incremented on every load/reset to discard responses from a superseded load
     let token = 0;
     let controller: AbortController | null = null;
 
@@ -33,7 +33,7 @@ export function useGeoCaptchaImages(fetcher: TileFetcher) {
         revoke(foregroundSrc.value);
         revoke(backgroundSrc.value);
         foregroundSrc.value = '';
-        foregroundSrc.value = '';
+        backgroundSrc.value = '';
     }
 
     /**

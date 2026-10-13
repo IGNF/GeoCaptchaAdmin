@@ -15,7 +15,7 @@ export interface TileRequest {
  *
  * @param request - The tile to fetch.
  * @param signal - Aborts the request when the result is no longer needed.
- * @returns An objet URL pointing to the image. The caller owns it and must release it
+ * @returns An object URL pointing to the image. The caller owns it and must release it
  * with `URL.revokeObjectURL`.
  */
 export type TileFetcher = (request: TileRequest, signal ?: AbortSignal) => Promise<string>;
