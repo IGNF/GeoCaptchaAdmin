@@ -1,31 +1,3 @@
-<template>
-  <div class="map-container">
-    <!-- Conteneur de la carte qui sera référencé par this.$refs.map -->
-    <div id="map" ref="map"></div>
-
-    <!-- Légende de la heatmap -->
-    <div v-if="showLegend" class="legend-overlay">
-      <div class="legend-header">
-        <h3>Légende</h3>
-        <button class="dsfr-close-button" @click="toggleLegend">
-          <span class="fr-icon-close-line fr-icon--sm" aria-hidden="true"></span>
-        </button>
-      </div>
-      <p>Présence de GéoCaptcha :</p>
-      <div class="legend-gradient">
-        <div class="gradient"></div>
-        <div class="labels">
-          <span>Faible présence</span>
-          <span>Forte présence</span>
-        </div>
-      </div>
-    </div>
-    <div v-else class="legend-toggle" @click="toggleLegend">
-      <span class="fr-icon-arrow-up-s-line"></span>
-    </div>
-  </div>
-</template>
-
 <script>
 import 'ol/ol.css';
 import { Map, View } from 'ol';
@@ -93,7 +65,7 @@ export default {
           });
 
           allCoordinates.push(...rawCoordinates);
-          
+
           if (data.kingpin.length >= data.nbTotalObjects) {
             break;
           }
@@ -166,9 +138,9 @@ export default {
           new TileLayer({
             source: new XYZ({
               url: 'https://data.geopf.fr/wmts?' +
-                   'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&TILEMATRIXSET=PM' +
-                   '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png' +
-                   '&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}',
+                  'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&TILEMATRIXSET=PM' +
+                  '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png' +
+                  '&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}',
               attributions: 'Carte © IGN/Geoplateforme',
             }),
           }),
@@ -188,6 +160,34 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="map-container">
+    <!-- Conteneur de la carte qui sera référencé par this.$refs.map -->
+    <div id="map" ref="map"></div>
+
+    <!-- Légende de la heatmap -->
+    <div v-if="showLegend" class="legend-overlay">
+      <div class="legend-header">
+        <h3>Légende</h3>
+        <button class="dsfr-close-button" @click="toggleLegend">
+          <span class="fr-icon-close-line fr-icon--sm" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p>Présence de GéoCaptcha :</p>
+      <div class="legend-gradient">
+        <div class="gradient"></div>
+        <div class="labels">
+          <span>Faible présence</span>
+          <span>Forte présence</span>
+        </div>
+      </div>
+    </div>
+    <div v-else class="legend-toggle" @click="toggleLegend">
+      <span class="fr-icon-arrow-up-s-line"></span>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .map-container {
