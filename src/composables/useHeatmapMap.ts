@@ -52,7 +52,8 @@ export function useHeatmapMap(target: Ref<HTMLElement | null>) {
     }
 
     function dispose() {
-        map.value?.setTarget(undefined);
+        map.value?.getLayers().forEach((layer) => layer.dispose());
+        map.value?.dispose();
         map.value = null;
     }
 
