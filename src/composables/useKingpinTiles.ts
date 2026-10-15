@@ -64,6 +64,7 @@ export function useKingpinTiles(credentials: () => ApiCredentials, options: Opti
                 complete = kingpin.length < pageSize || (nbTotalObjects !== undefined && fetched >= nbTotalObjects);
             }
 
+            if (signal.aborted) return;
             truncated.value = !complete;
             tiles.value = Array.from(unique.values())
         } catch (err) {
