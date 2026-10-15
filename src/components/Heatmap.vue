@@ -34,7 +34,7 @@
 
       <HeatmapLegend />
 
-      <p v-if="loading" class="heatmap__status fr-test--sm fr-mb-0" role="status">
+      <p v-if="loading" class="heatmap__status fr-text--sm fr-mb-0" role="status">
         Chargement des GéoCaptchas…
       </p>
     </div>
