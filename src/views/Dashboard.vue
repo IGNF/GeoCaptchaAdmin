@@ -146,7 +146,12 @@
                   </div>
                   <div class="info-item gauge mb-2">
                     <!-- Composant GaugeChart pour afficher le taux de réussite -->
-                    <GaugeChart :value="Math.round(kingpin.successRate)" min="0" max="100" label="Taux de réussite (%)" />
+                    <GaugeChart
+                        :value="Math.round(kingpin.successRate)"
+                        :min="0"
+                        :max="100"
+                        label="Taux de réussite (%)"
+                    />
                   </div>
                 </div>
               </div>
