@@ -35,6 +35,8 @@ export function useKingpinTiles(credentials: () => ApiCredentials, options: Opti
         controller = new AbortController();
         const { signal } = controller;
 
+        const loadCredantials = credentials();
+
         loading.value = true;
         error.value = '';
         truncated.value = false;
@@ -51,7 +53,7 @@ export function useKingpinTiles(credentials: () => ApiCredentials, options: Opti
                 const { kingpin, nbTotalObjects } = await fetchKingpinPage(
                     firstObject,
                     pageSize,
-                    credentials(),
+                    loadCredantials,
                     signal,
                 );
 
