@@ -14,9 +14,10 @@
       min?: number;
       max?: number;
       /** Caption shown under the gauge, also used as its accessible name. */
-      label?: string;
+      label: string;
+      showLabel?: boolean;
     }>(),
-    { min: 0, max: 100, label: '' },
+    { min: 0, max: 100, showLabel: true },
   );
 
   const CENTER = 100;
@@ -25,7 +26,9 @@
     `A ${GAUGE_RADIUS} ${GAUGE_RADIUS} 0 0 1 ${CENTER + GAUGE_RADIUS} ${CENTER}`,
   ].join(' ');
 
-  const ratio = computed(() => gaugeRatio(props.value, props.min, props.max));
+  const ratio = computed(() =>
+      Math.max(0, Math.min(1, gaugeRatio(props.value, props.min, props.max))),
+  );
 
   /** Visible length of the colored arc, followed by the full arc length. */
   const dashArray = computed(() => `${ratio.value * GAUGE_ARC_LENGTH} ${GAUGE_ARC_LENGTH}`);
@@ -43,7 +46,7 @@
       :aria-valuenow="value"
       :aria-valuemin="min"
       :aria-valuemax="max"
-      :aria-label="label || undefined"
+      :aria-label="label"
     >
       <!-- Background arc -->
       <path class="gauge__track" :d="arcPath" stroke-width="12" fill="none" />
@@ -65,7 +68,7 @@
       </text>
     </svg>
 
-    <div v-if="label" class="gauge__label fr-text--sm fr-mb-0">{{ label }}</div>
+    <div v-if="showLabel" class="gauge__label fr-text--sm fr-mb-0">{{ label }}</div>
   </div>
 </template>
 
