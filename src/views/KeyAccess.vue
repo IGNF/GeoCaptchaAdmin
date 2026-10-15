@@ -25,6 +25,7 @@
     appId: String,
   });
 
+  // TODO: update API path once .env is set
   const CUSER_API_URL = "http://127.0.0.1:3000/api/v1/admin/cuser";
   const KEY_NAME_REGEX = /^[a-zA-Z0-9_-]+$/;
   const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2}|com)$/;

@@ -13,9 +13,9 @@ export function useTimedAlert(duration = 3000) {
         clearTimeout(timer);
         Object.assign(alert, { visible: true, title, message });
         timer = setTimeout(hide, duration);
-
-        onBeforeUnmount(() => clearTimeout(timer));
     }
+
+    onBeforeUnmount(() => clearTimeout(timer));
 
     return { alert, show, hide };
 }
