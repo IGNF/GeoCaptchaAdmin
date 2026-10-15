@@ -9,7 +9,6 @@ import VectorSource from "ol/source/Vector";
 import { fromLonLat } from "ol/proj";
 import {createPlanIgnLayer, FRANCE_CENTER} from "@/utils/geo/ign";
 import { HEATMAP_GRADIENT } from "@/utils/geocaptcha/heatmap";
-import {points} from "@turf/turf";
 
 /**
  * Sets up an OpenLayers map showing the IGN base map under a heatmap layer.

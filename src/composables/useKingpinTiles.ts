@@ -1,11 +1,11 @@
 import {onBeforeUnmount, ref, shallowRef} from "vue";
 import type { ApiCredentials } from '@/services/api-config'
-import type { fetchKingpinPage, type TileCoord } from '@/services/kingpin-service'
+import { fetchKingpinPage, type TileCoord } from '@/services/kingpin-service'
 
 interface Options {
     /** Number of GeoCaptchas requested per page. Defaults to 100 */
     pageSize?: number
-    /** Safety cap on the number of pages fetched. Defaults to 50 (5000 Geocaptchas). */
+    /** Safety cap on the number of pages fetched. Defaults to 50 (5000 GeoCaptchas). */
     maxPages?: number
 }
 
@@ -66,12 +66,12 @@ export function useKingpinTiles(credentials: () => ApiCredentials, options: Opti
 
             truncated.value = !complete;
             tiles.value = Array.from(unique.values())
-        } catch (error) {
+        } catch (err) {
             if (signal.aborted) return // superseded by a new load, or unmounted
-            console.error(error)
+            console.error(err)
             error.value = 'Les données de la carte de chaleur n’ont pas pu être chargées.'
         } finally {
-            if (signal.aborted) loading.value = false;
+            if (!signal.aborted) loading.value = false;
         }
     }
 

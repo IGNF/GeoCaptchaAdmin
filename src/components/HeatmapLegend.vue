@@ -3,16 +3,16 @@
   import { DsfrButton } from "@gouvminint/vue-dsfr";
   import { HEATMAP_GRADIENT } from "@/utils/geocaptcha/heatmap.ts";
 
-  const expended = ref(true);
+  const expanded = ref(true);
 
   const gradientCss = computed(
-      () => `linear-gradient(to right, ${HEATMAP_GRADIENT.slice(1).join(' ')}`
-  );
+    () => `linear-gradient(to right, ${HEATMAP_GRADIENT.slice(1).join(', ')})`,
+  )
 </script>
 
 <template>
   <aside class="heatmap-legend" aria-label="Légende de la carte de chaleur">
-    <template v-if="expended">
+    <template v-if="expanded">
       <div class="heatmap-legend__header">
         <h3 class="fr-text--sm fr-text--bold fr-mb-0">Légende</h3>
         <DsfrButton
@@ -24,7 +24,7 @@
           size="sm"
           title="Masquer la légende"
           aria-label="Masquer la légende"
-          @click="expended = false"
+          @click="expanded = false"
         />
       </div>
 
@@ -34,24 +34,23 @@
         :style="{ background: gradientCss }"
         role="img"
         aria-label="Dégradé de couleurs, de faible à forte présence"
-      >
-        <div class="heatmap-legend__labels fr-text--xs">
-          <span>Faible présence</span>
-          <span>Forte présence</span>
-        </div>
+      />
+      <div class="heatmap-legend__labels fr-text--xs">
+        <span>Faible présence</span>
+        <span>Forte présence</span>
       </div>
     </template>
 
     <DsfrButton
       v-else
       type="button"
-      icon="ri-arrow-down-s-line"
+      icon="ri-arrow-up-s-line"
       icon-only
       tertiary
       no-outline
       title="Afficher la légende"
       aria-label="Afficher la légende"
-      @click="expended = true"
+      @click="expanded = true"
     />
   </aside>
 </template>
