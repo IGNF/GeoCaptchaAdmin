@@ -219,6 +219,10 @@
             panel-id="tab-content-0"
             icon="ri-slideshow-line"
             @click="activeTab = 0"
+            @next="activeTab = 1"
+            @previous="activeTab = 1"
+            @first="activeTab = 0"
+            @last="activeTab = 1"
         >
           Gestion de GéoCaptcha
         </DsfrTabItem>
@@ -228,6 +232,10 @@
             panel-id="tab-content-1"
             icon="ri-survey-line"
             @click="activeTab = 1"
+            @next="activeTab = 0"
+            @previous="activeTab = 0"
+            @first="activeTab = 0"
+            @last="activeTab = 1"
         >
           Logs
         </DsfrTabItem>
