@@ -9,7 +9,7 @@ export interface ApiCredentials {
 }
 
 /**
- * Builds the authentification headers expected by the backend.
+ * Builds the authentication headers expected by the backend.
  *
  * @param credentials - The API credentials.
  * @returns Headers to spread into a `fetch` call.
