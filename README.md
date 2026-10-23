@@ -1,62 +1,87 @@
-# 🚀 CaptchAdmin
+# GeoCaptchaAdmin
 
-## 🌍 Pourquoi CaptchAdmin ?
+GeoCaptchaAdmin est l'interface d'administration des GéoCaptcha, des captchas fondés sur des données géographiques et développés par l'IGN. Elle permet notamment de gérer les clés d'accès, de consulter les métriques et les journaux, et de créer des défis.
 
-Lorsque vous naviguez sur Internet, il vous est souvent demandé de prouver que vous êtes un humain à l’aide d’un captcha. Ces défis, souvent sous forme de textes déformés ou de séquences d’images, peuvent être contraignants.
+L'application est développée avec Vue 3 et Vite. Son interface s'appuie sur le Système de Design de l'État (DSFR) et OpenLayers.
 
-L’**IGN**, par l’intermédiaire de la **Mission Architecture Réseau et Sécurité (MARS)**, a développé un système innovant : **les GéoCaptcha**. Ces captchas utilisent des données géographiques pour offrir une alternative ludique, respectueuse de la vie privée et éducative.
+## Fonctionnalités
 
-Dans le cadre du projet de **développement informatique 2024-2025**, notre équipe est chargée d’**améliorer et optimiser l’interface d’administration** existante du GéoCaptcha. Actuellement, une API administrateur permet de gérer les jeux, les clés d’accès et d’accéder à diverses métriques. Cependant, l’interface actuelle présente des **contraintes d’ergonomie, de design et de fonctionnalités**. Une refonte est donc nécessaire pour offrir une **expérience utilisateur plus fluide et intuitive**.
+- Création et prévisualisation de GéoCaptcha
+- Consultation des statistiques, des journaux et des cartes de chaleur
+- Administration des clés d'accès à l'API
+- Interface conforme au Système de Design de l'État
 
----
+## Prérequis
 
-## 📚 Documentation
+- Node.js et npm
+- Une instance de l'API GéoCaptcha accessible depuis l'application
+- Une clé API et un identifiant d'application autorisés par cette API
 
-📌 **Retrouvez la documentation complète ici :** [Documentation CaptchAdmin](https://github.com/MaelQllt/PDI14_GeoCaptcha/blob/main/doc/DOC%20DEV.md)
+## Installation et développement
 
----
+À la racine du dépôt, installez les dépendances :
 
-## 🚀 Installation et Lancement
-
-### ✅ **Prérequis**
-
-1. **Obtenir une clé d’accès** :
-   - Une clé API et un identifiant sont nécessaires pour exploiter pleinement l’interface.
-   - Ces informations doivent être renseignées dans un fichier **`.env`** dans le dossier `dev/frontend`.
-
-```env
-VITE_API_KEY=your_api_key
-VITE_API_ID=your_api_id
+```sh
+npm install
 ```
 
-2. **Installer Node.js et npm** :
-   - Assurez-vous que **npm** est installé sur votre machine.
-   - [Guide d’installation de npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+Lancez le serveur de développement :
 
----
-
-### 🔧 **Étapes d’installation**
-
-Dans le terminal, **placez-vous dans le dossier `dev/frontend`**, puis exécutez les commandes suivantes :
-
-1️⃣ **Installer les dépendances** :
-```bash
-npm install @gouvfr/dsfr vite ol @turf/turf axios
+```sh
+npm run dev
 ```
 
-2️⃣ **Lancer le projet** :
-```bash
+Pour rendre le serveur accessible depuis d'autres appareils du réseau local :
+
+```sh
 npm run dev -- --host
 ```
-> La commande `npm run dev -- --host` permet de lancer le serveur de développement en rendant l’interface accessible depuis d’autres appareils sur le réseau local. Cela est particulièrement utile pour tester l’application sur différents environnements.
 
-3️⃣ **Accéder à l’interface** :
-   - Copiez-collez dans un navigateur le lien **Network** affiché (ex. : `http://192.0.0.2:5176/`).
+Ouvrez ensuite l'adresse locale indiquée dans le terminal. Si vous utilisez l'option `--host`, l'adresse réseau y est également indiquée.
 
----
+## Connexion à l'API
 
-## 🎉 Profitez de CaptchAdmin !
+L'application utilise actuellement l'API à l'adresse `http://127.0.0.1:3000/api/v1`. Démarrez l'API à cette adresse avant d'utiliser les fonctionnalités qui en dépendent. L'identifiant d'application utilisé par l'interface est actuellement `admin`.
 
-Vous êtes maintenant prêt à utiliser **CaptchAdmin** et à découvrir une nouvelle manière de gérer les GéoCaptcha ! 🌎🔒
+Saisissez la clé API dans le champ prévu à cet effet dans l'interface. Ne placez pas de secrets dans le dépôt ni dans des variables d'environnement préfixées par `VITE_` : ces variables sont intégrées au code envoyé au navigateur.
 
+## Build et prévisualisation
 
+Générez les fichiers de production dans `dist/` :
+
+```sh
+npm run build
+```
+
+Pour prévisualiser le build localement :
+
+```sh
+npm run preview
+```
+
+## Docker
+
+Construisez l'image depuis la racine du dépôt :
+
+```sh
+docker build -t geocaptcha-admin .
+```
+
+Lancez le conteneur :
+
+```sh
+docker run --rm -p 8080:8080 geocaptcha-admin
+```
+
+L'interface est alors disponible à l'adresse <http://localhost:8080/>.
+
+## Documentation et contribution
+
+- [Documentation développeur](doc/DOC%20DEV.md)
+- [Documentation du DSFR](doc/DSFR.md)
+- [Guide de contribution](CONTRIBUTING.md)
+- [Conventions de code](CODING.md)
+
+## Licence
+
+Ce projet est distribué sous licence MIT. Consultez le fichier [LICENCE](LICENCE).
