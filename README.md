@@ -84,6 +84,12 @@ L'interface est alors disponible à l'adresse <http://localhost:8080/>.
 - [Guide de contribution](CONTRIBUTING.md)
 - [Conventions de code](CODING.md)
 
+## Contact
+
+Pour toute question ou proposition :
+📧 geocaptcha-admin@ign.fr
+🔗 Site principal du projet GeoCaptcha
+
 ## Licence
 
 Ce projet est distribué sous licence MIT. Consultez le fichier [LICENCE](LICENCE).
