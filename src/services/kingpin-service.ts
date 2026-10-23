@@ -14,6 +14,19 @@ export interface KingpinPayload extends Tile {
     ok: '1';
 }
 
+/** Coordinates of a tile, as returned by the backend (assumed to be at `TILE_ZOOM`). */
+export interface TileCoord {
+    x: number;
+    y: number;
+}
+
+/** One page of the GeoCaptcha list. Only fields the heatmap needs are typed */
+export interface KingpinPage {
+    kingpin: Array<{ tileCoord?: TileCoord }>;
+    /** Total number of GeoCaptcha on the backend, across all pages */
+    nbTotalObjects?: number;
+}
+
 /**
  * Creates or updates a GeoCaptcha ("Kingpin") on the backend.
  *
@@ -50,4 +63,38 @@ export async function saveKingpin(
     }
 
     return body;
+}
+
+/**
+ * Fetches one page of GeoCaptchas.
+ *
+ * @param firstObject - 1-based index of the first object in the page.
+ * @param nbObjects - Maximum number of objects in the page.
+ * @param credentials - API credentials used to authenticate the request.
+ * @param signal - Abort the request when the result is no longer needed.
+ * @returns The page.
+ * @throws If the request fails, the status is not 2xx or the payload has an unexpected shape.
+ */
+export async function fetchKingpinPage(
+    firstObject: number,
+    nbObjects: number,
+    credentials: ApiCredentials,
+    signal?: AbortSignal,
+): Promise<KingpinPage> {
+    const params = new URLSearchParams({
+        firstObject: String(firstObject),
+        nbObjects: String(nbObjects),
+    });
+    const response = await fetch(`${API_URL}/admin/kingpin?${params}`, {
+        headers: { Accept: 'application/json', ...authHeaders(credentials) },
+        signal,
+    });
+    if (!response.ok) {
+        const detail = await response.text().catch(() => '');
+        throw new Error(`Kingpin list request failed (HTTP ${response.status}) ${detail}`);
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data?.kingpin)) throw new Error('Unexpected kingpin list format');
+    return data as KingpinPage;
 }
